@@ -2201,7 +2201,7 @@ function renderManagerCoperti(){
     if(kEl) kEl.innerHTML=
       kpi("Moy. couverts/j",avgCop,data.length+" jours")+
       kpi("Menù / jour",avgMenu>0?avgMenu:"—","moyenne")+
-      kpi("Pic couverts",maxCop,maxDay?maxDay.data:"");
+      kpi("Pic couverts",maxCop,maxDay?(maxDay.date||maxDay.data||""):"");
 
     // SVG mini line chart
     if(cEl&&data.length>=2){
@@ -2218,7 +2218,7 @@ function renderManagerCoperti(){
       // Labels ogni 2
       var labs=data.map(function(r,i){
         if(i%2!==0&&i!==data.length-1) return "";
-        var label=r.data?r.data.split(".").slice(0,2).join("."):"";
+        var label=(r.date||r.data||"").split(".").slice(0,2).join(".");
         return '<text x="'+toX(i)+'" y="'+(H-1)+'" text-anchor="middle" fill="#7a5c40" font-size="8">'+label+'</text>';
       }).join("");
       cEl.setAttribute("viewBox","0 0 300 "+H);
@@ -2233,7 +2233,7 @@ function renderManagerCoperti(){
     lEl.innerHTML=data.slice().reverse().map(function(r){
       return '<div class="cmd-card" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px">'+
         '<div>'+
-          '<div style="font-weight:600;font-size:14px;color:var(--beige)">'+r.data+'</div>'+
+          '<div style="font-weight:600;font-size:14px;color:var(--beige)">'+(r.date||r.data||"")+'</div>'+
           (r.note?'<div style="color:var(--gris);font-size:11px;margin-top:2px">'+r.note+'</div>':'')+
         '</div>'+
         '<div style="display:flex;gap:20px;align-items:center">'+
@@ -2466,6 +2466,14 @@ function _renderCopChart(){
   var cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-days);
   function parseD(s){if(!s)return null;s=s.toString().trim();var m=s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/);if(m)return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));return new Date(s);}
   var filtered=_copDati.filter(function(r){var d=parseD(r.date||r.data);return d&&d>=cutoff;}).slice().reverse();
+
+  // Se nessun dato nel periodo, auto-switch al periodo più ampio con dati
+  if(filtered.length===0 && _copDati.length>0 && _copPeriodo==="week"){
+    copPeriodo("month"); return;
+  }
+  if(filtered.length===0 && _copDati.length>0 && _copPeriodo==="month"){
+    copPeriodo("year"); return;
+  }
   var avgC=filtered.length>0?Math.round(filtered.reduce(function(s,r){return s+(parseInt(r.coperti)||0);},0)/filtered.length):0;
   var avgM=filtered.length>0?Math.round(filtered.reduce(function(s,r){return s+(parseInt(r.menu)||0);},0)/filtered.length):0;
   var maxC=filtered.length>0?Math.max.apply(null,filtered.map(function(r){return parseInt(r.coperti)||0;})):0;
