@@ -467,6 +467,8 @@
           <input type="date" id="cop-input-date" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px;color:var(--beige);font-size:13px;box-sizing:border-box"></div>
         <button onclick="salvaCouverts()" style="width:100%;background:var(--or);color:#120900;border:none;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">💾 Enregistrer</button>
       </div>
+      <!-- Lista storica -->
+      <div id="cop-lista-storica"></div>
     </div>
     <!-- Envoyés -->
     <div class="tab-page" id="cp-envoyes">
@@ -2500,6 +2502,23 @@ function _renderCopChart(){
   vals.forEach(function(v,i){html+='<circle cx="'+toX(i)+'" cy="'+toY(v)+'" r="3" fill="#e8b84b"/>';});
   svg.innerHTML=html;
   if(labEl){var step=Math.max(1,Math.ceil(n/6));labEl.innerHTML=filtered.map(function(r,i){if(i%step!==0&&i!==n-1)return'<span></span>';var d=(r.date||r.data||"").split(".");return'<span>'+(d.length>=2?d[0]+"/"+d[1]:(r.date||r.data||""))+'</span>';}).join("");}
+
+  // Lista storica sotto il form
+  var listaEl=document.getElementById("cop-lista-storica");
+  if(listaEl){
+    if(filtered.length===0){listaEl.innerHTML='';return;}
+    listaEl.innerHTML=filtered.slice().reverse().map(function(r){
+      return '<div class="cmd-card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;margin-bottom:6px">'+
+        '<div><div style="font-weight:600;font-size:13px;color:var(--beige)">📅 '+(r.date||r.data||"")+'</div>'+
+        (r.note?'<div style="color:var(--gris);font-size:10px">'+r.note+'</div>':'')+
+        '</div>'+
+        '<div style="display:flex;gap:16px;align-items:center">'+
+          '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--or)">'+(r.coperti||0)+'</div><div style="font-size:9px;color:var(--gris)">couverts</div></div>'+
+          ((parseInt(r.menu)||0)>0?'<div style="text-align:center"><div style="font-size:14px;font-weight:600;color:var(--vert)">'+(r.menu||0)+'</div><div style="font-size:9px;color:var(--gris)">menù</div></div>':'')+
+        '</div>'+
+      '</div>';
+    }).join("");
+  }
 }
 
 function loadCoperti(){
