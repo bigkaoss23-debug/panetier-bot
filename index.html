@@ -1405,6 +1405,27 @@ function _caricoEnvoyes(){
 
 function renderEnvoyes(){
   var c=document.getElementById("c-forn-btn-list"); if(!c) return;
+  // Sincronizza con GAS — rimuove ordini REÇU o ANNULE dal localStorage
+  gasGet("get_achats").then(function(res){
+    if(!res.ok||!res.achats) return;
+    var recuSet={};
+    res.achats.forEach(function(a){
+      var s=(a.statut||"").toUpperCase();
+      if(s==="REÇU"||s==="RECU"||s==="ANNULE") recuSet[a.rowIndex]=true;
+    });
+    var prima=cOrdiniInviati.length;
+    cOrdiniInviati=cOrdiniInviati.filter(function(o){
+      return !o.rowIndex||!recuSet[o.rowIndex];
+    });
+    if(cOrdiniInviati.length<prima){
+      _salvaEnvoyes();
+      _renderEnvoyesList();
+    }
+  }).catch(function(){});
+  _renderEnvoyesList();
+}
+function _renderEnvoyesList(){
+  var c=document.getElementById("c-forn-btn-list"); if(!c) return;
   if(cOrdiniInviati.length===0){
     c.innerHTML='<div class="empty-state"><span class="empty-icon">📦</span>Aucun ordre envoyé</div>';
     return;
@@ -1925,7 +1946,7 @@ function _loadCopertiMiniChart(){
     var curPts=curVals.map(function(v,i){return toX(i,curVals.length)+","+toY(v);}).join(" ");
     var prevPts=prevVals.map(function(v,i){return toX(i,prevVals.length)+","+toY(v);}).join(" ");
     var labs=cur.map(function(r,i){
-      var l=r.data?r.data.split(".").slice(0,2).join("."):"";
+      var l=(r.date||r.data||"").split(".").slice(0,2).join(".");
       return '<text x="'+toX(i,cur.length)+'" y="'+(H+2)+'" text-anchor="middle" fill="#7a5c40" font-size="8">'+l+'</text>';
     }).join("");
     var dots=curVals.map(function(v,i){
@@ -2524,10 +2545,33 @@ function _renderCopChart(){
 function loadCoperti(){
   var di=document.getElementById("cop-input-date");
   if(di&&!di.value){var n=new Date();di.value=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");}
+  // Mostra loading
+  var svg=document.getElementById("cop-chart-svg");
+  if(svg)svg.innerHTML='<text x="160" y="60" text-anchor="middle" fill="#7a5c40" font-size="12">Chargement...</text>';
   gasGet("get_coperti").then(function(res){
-    _copDati=(res.ok&&res.coperti)?res.coperti:[];
+    if(res.ok && res.coperti && res.coperti.length>0){
+      _copDati=res.coperti;
+      // Normalizza: assicura che ogni record abbia campo 'date'
+      _copDati=_copDati.map(function(r){
+        return {
+          date: r.date||r.data||"",
+          coperti: parseInt(r.coperti)||0,
+          menu: parseInt(r.menu)||0,
+          demandeur: r.demandeur||"",
+          note: r.note||r.notes||""
+        };
+      });
+      // Reset periodo a week e lascia auto-switch gestire
+      _copPeriodo="week";
+    } else {
+      _copDati=[];
+    }
     _renderCopChart();
-  }).catch(function(){_copDati=[];_renderCopChart();});
+  }).catch(function(e){
+    console.error("loadCoperti error:", e);
+    _copDati=[];
+    _renderCopChart();
+  });
 }
 
 function salvaCouverts(){
