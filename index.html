@@ -249,20 +249,54 @@
     .periodo-wrap{display:flex;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:18px;gap:4px}
     .periodo-btn{flex:1;padding:9px;text-align:center;border-radius:9px;color:var(--gris);font-size:13px;cursor:pointer;transition:all 0.2s;user-select:none}
     .periodo-btn.active{background:var(--or);color:var(--bg);font-weight:500}
+
+    /* KPI cards moderne */
     .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-    .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
-    .kpi-label{color:var(--gris);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px}
-    .kpi-val{color:var(--beige);font-size:22px;font-weight:600;font-family:"Playfair Display",serif}
-    .kpi-sub{color:var(--gris);font-size:11px;margin-top:3px}
-    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
-    .chart-title{color:var(--creme);font-size:13px;font-weight:500;margin-bottom:14px}
+    .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px 14px;position:relative;overflow:hidden;transition:transform 0.15s,border-color 0.2s}
+    .kpi-card:active{transform:scale(0.97)}
+    .kpi-card[onclick]{cursor:pointer}
+    .kpi-card[onclick]:hover{border-color:rgba(232,184,75,0.4)}
+    .kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;opacity:0.7}
+    .kpi-card.kpi-gold::before{background:linear-gradient(90deg,#e8b84b,#f0c870)}
+    .kpi-card.kpi-blue::before{background:linear-gradient(90deg,#5dade2,#76d7c4)}
+    .kpi-card.kpi-green::before{background:linear-gradient(90deg,#27ae60,#7ec87e)}
+    .kpi-card.kpi-red::before{background:linear-gradient(90deg,#e74c3c,#e87970)}
+    .kpi-icon{font-size:22px;margin-bottom:8px;display:block;opacity:0.9}
+    .kpi-label{color:var(--gris);font-size:10px;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:5px}
+    .kpi-val{color:var(--beige);font-size:22px;font-weight:700;font-family:"Playfair Display",serif;line-height:1.1}
+    .kpi-sub{color:var(--gris);font-size:10px;margin-top:4px;opacity:0.8}
+    .kpi-arrow{position:absolute;bottom:12px;right:14px;color:var(--or);font-size:16px;opacity:0.5}
+
+    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px;margin-bottom:16px}
+    .chart-title{color:var(--creme);font-size:13px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:6px}
     .bar-wrap{display:flex;flex-direction:column;gap:10px}
     .bar-row{display:flex;align-items:center;gap:10px}
     .bar-label{color:var(--gris);font-size:11px;width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .bar-track{flex:1;background:var(--card2);border-radius:6px;height:22px;overflow:hidden;position:relative}
-    .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--or),var(--or-clair));transition:width 0.8s cubic-bezier(.4,0,.2,1)}
-    .bar-amount{color:var(--beige);font-size:11px;font-weight:500;position:absolute;right:8px;top:50%;transform:translateY(-50%);white-space:nowrap}
+    .bar-track{flex:1;background:var(--card2);border-radius:8px;height:26px;overflow:hidden;position:relative}
+    .bar-fill{height:100%;border-radius:8px;transition:width 0.9s cubic-bezier(.4,0,.2,1)}
+    .bar-amount{color:var(--beige);font-size:11px;font-weight:600;position:absolute;right:10px;top:50%;transform:translateY(-50%);white-space:nowrap}
     .donut-wrap{display:flex;justify-content:center;margin:8px 0 12px}
+
+    /* Modal overlay */
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,4,1,0.82);z-index:500;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease}
+    .modal-sheet{background:var(--card);border:1px solid var(--border);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px 20px 40px;max-height:80vh;overflow-y:auto;animation:slideUp 0.3s cubic-bezier(.4,0,.2,1)}
+    .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;cursor:pointer}
+    .modal-title{font-family:"Playfair Display",serif;color:var(--or-clair);font-size:18px;margin-bottom:4px}
+    .modal-sub{color:var(--gris);font-size:12px;margin-bottom:18px}
+    .modal-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+    .modal-row:last-child{border-bottom:none}
+    .modal-row-left{display:flex;align-items:center;gap:10px}
+    .modal-row-emoji{font-size:20px}
+    .modal-row-name{color:var(--beige);font-size:13px;font-weight:500}
+    .modal-row-sub{color:var(--gris);font-size:11px;margin-top:1px}
+    .modal-row-val{color:var(--or-clair);font-size:14px;font-weight:700}
+    .modal-bar{height:3px;background:var(--card2);border-radius:2px;margin-top:6px;overflow:hidden}
+    .modal-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--or),var(--or-clair))}
+    .modal-total{background:var(--card2);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+    .modal-total-label{color:var(--gris);font-size:12px}
+    .modal-total-val{color:var(--or-clair);font-size:20px;font-weight:700;font-family:"Playfair Display",serif}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 
     /* Manager — fatture */
     .fat-summary{display:flex;gap:10px;margin-bottom:16px}
@@ -446,9 +480,9 @@
         <div class="filtro"        id="cop-f-year"  onclick="copPeriodo('year')" >Cette année</div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
-        <div class="kpi-card" style="flex:1;text-align:center"><div class="kpi-label">Moy. couverts</div><div class="kpi-val" id="cop-kpi-avg">—</div></div>
-        <div class="kpi-card" style="flex:1;text-align:center"><div class="kpi-label">Moy. menù</div><div class="kpi-val" id="cop-kpi-menu">—</div></div>
-        <div class="kpi-card" style="flex:1;text-align:center"><div class="kpi-label">Maximum</div><div class="kpi-val" id="cop-kpi-max">—</div></div>
+        <div class="kpi-card kpi-gold" style="flex:1;text-align:center;cursor:default"><span class="kpi-icon" style="font-size:16px">👤</span><div class="kpi-label">Moy. couverts</div><div class="kpi-val" id="cop-kpi-avg">—</div></div>
+        <div class="kpi-card kpi-green" style="flex:1;text-align:center;cursor:default"><span class="kpi-icon" style="font-size:16px">🍽️</span><div class="kpi-label">Moy. menù</div><div class="kpi-val" id="cop-kpi-menu">—</div></div>
+        <div class="kpi-card kpi-blue" style="flex:1;text-align:center;cursor:default"><span class="kpi-icon" style="font-size:16px">📈</span><div class="kpi-label">Maximum</div><div class="kpi-val" id="cop-kpi-max">—</div></div>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
         <div style="font-size:11px;color:var(--gris);margin-bottom:8px"><span style="color:var(--or)">●</span> Couverts &nbsp;<span style="color:var(--vert)">●</span> Menù</div>
@@ -590,11 +624,11 @@
   </div>
   <div class="tabs">
     <div class="tab active" onclick="managerTab('dashboard')"  id="mt-dashboard"><span class="tab-icon">📊</span>Dashboard</div>
-    <div class="tab"        onclick="managerTab('fournisseurs')" id="mt-fournisseurs"><span class="tab-icon">🏪</span>Fournisseurs</div>
+    <div class="tab"        onclick="managerTab('fournisseurs')" id="mt-fournisseurs"><span class="tab-icon">🏪</span>Fourniss.</div>
     <div class="tab"        onclick="managerTab('catalogue')"  id="mt-catalogue"><span class="tab-icon">📖</span>Catalogue</div>
     <div class="tab"        onclick="managerTab('factures')"   id="mt-factures"><span class="tab-icon">🧾</span>Factures</div>
     <div class="tab"        onclick="managerTab('coperti')"    id="mt-coperti"><span class="tab-icon">👥</span>Couverts</div>
-    <div class="tab"        onclick="managerTab('commandes')"  id="mt-commandes"><span class="tab-icon">📋</span>Commandes</div>
+    <div class="tab"        onclick="managerTab('commandes')"  id="mt-commandes"><span class="tab-icon">📋</span>Cmdes</div>
   </div>
   <div class="tab-pages">
     <!-- Dashboard -->
@@ -1837,13 +1871,21 @@ function renderDashboard(){
   var sorted=Object.keys(perForn).sort(function(a,b){return perForn[b].tot-perForn[a].tot;});
   var maxV=sorted.length>0?perForn[sorted[0]].tot:1; if(maxV<=0)maxV=1;
   var FORN_COLORS=["#e8b84b","#c39bd3","#76d7c4","#e87970","#5dade2","#f0a500"];
+  var FORN_GRADIENTS=[
+    "linear-gradient(90deg,#e8b84b,#f0c870)",
+    "linear-gradient(90deg,#c39bd3,#d9b8e8)",
+    "linear-gradient(90deg,#76d7c4,#98e8d8)",
+    "linear-gradient(90deg,#e87970,#f0a09a)",
+    "linear-gradient(90deg,#5dade2,#80c8f0)",
+    "linear-gradient(90deg,#f0a500,#f8c040)"
+  ];
   document.getElementById("m-bar-chart").innerHTML=sorted.length>0?
     sorted.map(function(f,i){
       var pct=Math.max(5,(perForn[f].tot/maxV)*100);
-      var col=FORN_COLORS[i%FORN_COLORS.length];
+      var grad=FORN_GRADIENTS[i%FORN_GRADIENTS.length];
       return '<div class="bar-row" onclick="drillForn(\''+f.replace(/'/g,"\\'")+'\''+')" style="cursor:pointer">'+
-             '<div class="bar-label">'+perForn[f].emoji+'</div>'+
-             '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+col+'"></div>'+
+             '<div class="bar-label">'+perForn[f].emoji+' '+f.split(' ')[0]+'</div>'+
+             '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+grad+'"></div>'+
              '<span class="bar-amount">'+(perForn[f].tot>0?"CHF "+perForn[f].tot.toFixed(0):"—")+'</span></div></div>';
     }).join(""):'<div style="color:var(--gris);font-size:12px;padding:12px 0">Aucune donnée pour cette période</div>';
 
@@ -1872,16 +1914,32 @@ function renderDashboard(){
   var dp=document.getElementById("m-drill-panel"); if(dp) dp.innerHTML="";
 }
 
+// Mappa configurazione KPI: icona, classe colore, azione click
+var KPI_CONFIG = {
+  depenses: {icon:"💶", cls:"kpi-gold", modal:true},
+  attente:  {icon:"⏳", cls:"kpi-blue", modal:false},
+  moyenne:  {icon:"⌀",  cls:"kpi-green", modal:true},
+  retards:  {icon:"⚠️", cls:"kpi-red", modal:false}
+};
+
 function kpiClk(label,val,sub,drill){
-  return '<div class="kpi-card" onclick="drillKpi(\''+drill+'\')" style="cursor:pointer">'+
+  var cfg=KPI_CONFIG[drill]||{icon:"📌",cls:"kpi-gold",modal:false};
+  var fn=cfg.modal?"openKpiModal('"+drill+"')"  :"drillKpi('"+drill+"')";
+  return '<div class="kpi-card '+cfg.cls+'" onclick="'+fn+'">'+
+    '<span class="kpi-icon">'+cfg.icon+'</span>'+
+    '<div class="kpi-label">'+label+'</div>'+
+    '<div class="kpi-val">'+val+'</div>'+
+    (sub?'<div class="kpi-sub">'+sub+'</div>':'')+
+    (cfg.modal?'<span class="kpi-arrow">›</span>':'')+
+  '</div>';
+}
+
+function kpi(label,val,sub,cls){
+  return '<div class="kpi-card '+(cls||"kpi-gold")+'" style="cursor:default">'+
     '<div class="kpi-label">'+label+'</div>'+
     '<div class="kpi-val">'+val+'</div>'+
     (sub?'<div class="kpi-sub">'+sub+'</div>':'')+
   '</div>';
-}
-
-function kpi(label,val,sub){
-  return '<div class="kpi-card"><div class="kpi-label">'+label+'</div><div class="kpi-val">'+val+'</div>'+(sub?'<div class="kpi-sub">'+sub+'</div>':'')+'</div>';
 }
 
 function dashChartTab(type){
@@ -2065,8 +2123,92 @@ function drillForn(forn){
   dp.innerHTML=html;
 }
 
-// ═══════════════════════════════════════════════════
-// MANAGER — FOURNISSEURS
+// ── Modal KPI ─────────────────────────────────────────────────────────────────
+function openKpiModal(type){
+  var now=new Date();
+  var days=mPeriodo==="week"?7:mPeriodo==="month"?30:365;
+  var cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-days);
+  var source=cOrdini.length>0?cOrdini:ORDINI_DEMO;
+  function parseD(s){if(!s)return null;s=s.toString().trim();if(/^\d{2}[./]\d{2}[./]\d{4}/.test(s)){var p=s.replace(/\//g,".").split(".");return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));}return new Date(s+(s.length===10?"T12:00:00":""));}
+  var lista=source.filter(function(o){var d=parseD(o.data);return d&&d>=cutoff;});
+  var periodLabel={week:"Cette semaine",month:"Ce mois",year:"Cette année"}[mPeriodo]||"";
+
+  var html='';
+  if(type==="depenses"){
+    var perForn={};
+    lista.filter(function(o){return o.stato==="ricevuto";}).forEach(function(o){
+      if(!perForn[o.forn])perForn[o.forn]={emoji:o.emoji||"🏪",tot:0,n:0};
+      perForn[o.forn].tot+=(o.montant||0);perForn[o.forn].n++;
+    });
+    var sf=Object.keys(perForn).sort(function(a,b){return perForn[b].tot-perForn[a].tot;});
+    var total=sf.reduce(function(s,f){return s+perForn[f].tot;},0);
+    var maxT=sf.length>0?perForn[sf[0]].tot:1;
+    html='<div class="modal-title">💶 Dépenses</div>'+
+         '<div class="modal-sub">'+periodLabel+' · fournisseurs reçus</div>'+
+         '<div class="modal-total"><span class="modal-total-label">Total période</span><span class="modal-total-val">CHF '+(total>0?total.toFixed(0):"0")+'</span></div>';
+    if(sf.length===0){html+='<div style="color:var(--gris);text-align:center;padding:20px 0;font-size:13px">Aucune donnée reçue</div>';}
+    else{html+=sf.map(function(f,i){
+      var pct=maxT>0?Math.round(perForn[f].tot/maxT*100):0;
+      var FORN_COLORS=["#e8b84b","#c39bd3","#76d7c4","#e87970","#5dade2","#f0a500"];
+      var col=FORN_COLORS[i%FORN_COLORS.length];
+      return '<div class="modal-row"><div class="modal-row-left"><span class="modal-row-emoji">'+perForn[f].emoji+'</span>'+
+        '<div><div class="modal-row-name">'+f+'</div>'+
+        '<div class="modal-bar"><div class="modal-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
+        '<div style="color:var(--gris);font-size:10px;margin-top:2px">'+perForn[f].n+' ordre'+(perForn[f].n>1?"s":"")+'</div></div></div>'+
+        '<div style="text-align:right"><div class="modal-row-val">CHF '+perForn[f].tot.toFixed(0)+'</div>'+
+        '<div style="color:var(--gris);font-size:10px">'+Math.round(perForn[f].tot/total*100)+'%</div></div></div>';
+    }).join("");}
+  }
+  else if(type==="moyenne"){
+    var rec=lista.filter(function(o){return o.stato==="ricevuto"&&(o.montant||0)>0;});
+    var tot=rec.reduce(function(s,o){return s+(o.montant||0);},0);
+    var avg=rec.length>0?tot/rec.length:0;
+    // Raggruppamento per fornitore: media ordini
+    var byForn={};
+    rec.forEach(function(o){if(!byForn[o.forn])byForn[o.forn]={emoji:o.emoji||"🏪",tot:0,n:0};byForn[o.forn].tot+=(o.montant||0);byForn[o.forn].n++;});
+    var sfM=Object.keys(byForn).sort(function(a,b){return (byForn[b].tot/byForn[b].n)-(byForn[a].tot/byForn[a].n);});
+    html='<div class="modal-title">⌀ Moyenne / ordre</div>'+
+         '<div class="modal-sub">'+periodLabel+' · '+rec.length+' ordres reçus</div>'+
+         '<div class="modal-total"><span class="modal-total-label">Moy. générale</span><span class="modal-total-val">CHF '+(avg>0?avg.toFixed(0):"0")+'</span></div>';
+    var statGrid='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">'+
+      '<div style="background:var(--card2);border-radius:12px;padding:12px;text-align:center">'+
+        '<div style="font-size:10px;color:var(--gris);margin-bottom:4px">Total reçu</div>'+
+        '<div style="font-size:18px;font-weight:700;color:var(--or)">CHF '+tot.toFixed(0)+'</div></div>'+
+      '<div style="background:var(--card2);border-radius:12px;padding:12px;text-align:center">'+
+        '<div style="font-size:10px;color:var(--gris);margin-bottom:4px">Ordres reçus</div>'+
+        '<div style="font-size:18px;font-weight:700;color:var(--vert)">'+rec.length+'</div></div>'+
+    '</div>';
+    html+=statGrid;
+    if(sfM.length>0){
+      html+='<div style="font-size:11px;color:var(--gris);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:10px">Moy. par fournisseur</div>';
+      html+=sfM.map(function(f){
+        var a=byForn[f].tot/byForn[f].n;
+        return '<div class="modal-row"><div class="modal-row-left"><span class="modal-row-emoji">'+byForn[f].emoji+'</span>'+
+          '<div><div class="modal-row-name">'+f+'</div>'+
+          '<div class="modal-row-sub">'+byForn[f].n+' ordre'+(byForn[f].n>1?"s":"")+'</div></div></div>'+
+          '<div class="modal-row-val">CHF '+a.toFixed(0)+'</div></div>';
+      }).join("");}
+  }
+
+  // Renderizza modal
+  var overlay=document.createElement("div");
+  overlay.className="modal-overlay";
+  overlay.id="kpi-modal";
+  overlay.innerHTML='<div class="modal-sheet">'+
+    '<div class="modal-handle" onclick="closeKpiModal()"></div>'+
+    html+
+    '<button onclick="closeKpiModal()" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:14px;color:var(--gris);font-size:14px;padding:13px;margin-top:16px;cursor:pointer;font-family:\'DM Sans\',sans-serif">Fermer</button>'+
+  '</div>';
+  overlay.addEventListener("click",function(e){if(e.target===overlay)closeKpiModal();});
+  document.body.appendChild(overlay);
+}
+
+function closeKpiModal(){
+  var m=document.getElementById("kpi-modal");
+  if(m) m.remove();
+}
+
+
 // ═══════════════════════════════════════════════════
 function renderFornManager(){
   var source=cOrdini.length>0?cOrdini:ORDINI_DEMO;
@@ -2206,9 +2348,9 @@ function renderManagerCoperti(){
     var avgMenu=data.length>0?Math.round(totalMenu/data.length):0;
     var maxDay=data.find(function(r){return (parseInt(r.coperti)||0)===maxCop;});
     if(kEl) kEl.innerHTML=
-      kpi("Moy. couverts/j",avgCop,data.length+" jours")+
-      kpi("Menù / jour",avgMenu>0?avgMenu:"—","moyenne")+
-      kpi("Pic couverts",maxCop,maxDay?(maxDay.date||maxDay.data||""):"");
+      kpi("Moy. couverts/j",avgCop,data.length+" jours","kpi-gold")+
+      kpi("Menù / jour",avgMenu>0?avgMenu:"—","moyenne","kpi-green")+
+      kpi("Pic couverts",maxCop,maxDay?(maxDay.date||maxDay.data||""):"","kpi-blue");
 
     // SVG mini line chart
     if(cEl&&data.length>=2){
@@ -2501,10 +2643,13 @@ function _renderCopChart(){
   var areaPath="M"+toX(0)+","+(H-py)+" "+vals.map(function(v,i){return toX(i)+","+toY(v);}).join(" ")+" "+toX(n-1)+","+(H-py)+" Z";
   var linePath=vals.map(function(v,i){return(i===0?"M":"L")+toX(i)+","+toY(v);}).join(" ");
   var menuPath=mvals.map(function(v,i){return(i===0?"M":"L")+toX(i)+","+toY(v);}).join(" ");
-  var html='<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8b84b" stop-opacity="0.25"/><stop offset="100%" stop-color="#e8b84b" stop-opacity="0.02"/></linearGradient></defs>';
+  var html='<defs>'+
+    '<linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8b84b" stop-opacity="0.3"/><stop offset="100%" stop-color="#e8b84b" stop-opacity="0.02"/></linearGradient>'+
+    '<linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#27ae60" stop-opacity="0.2"/><stop offset="100%" stop-color="#27ae60" stop-opacity="0.01"/></linearGradient>'+
+  '</defs>';
   [0,0.5,1].forEach(function(t){var y=py+t*(H-2*py);html+='<line x1="'+px+'" y1="'+y+'" x2="'+(W-px)+'" y2="'+y+'" stroke="#2a1a0a" stroke-width="1"/><text x="'+(px-3)+'" y="'+(y+4)+'" text-anchor="end" fill="#7a5c40" font-size="9">'+Math.round(maxV*(1-t))+'</text>';});
-  html+='<path d="'+areaPath+'" fill="url(#cg)"/><path d="'+linePath+'" fill="none" stroke="#e8b84b" stroke-width="2.5" stroke-linejoin="round"/><path d="'+menuPath+'" fill="none" stroke="#27ae60" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="4,3"/>';
-  vals.forEach(function(v,i){html+='<circle cx="'+toX(i)+'" cy="'+toY(v)+'" r="3" fill="#e8b84b"/>';});
+  html+='<path d="'+areaPath+'" fill="url(#cg)"/><path d="'+linePath+'" fill="none" stroke="#e8b84b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><path d="'+menuPath+'" fill="none" stroke="#27ae60" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"/>';
+  vals.forEach(function(v,i){html+='<circle cx="'+toX(i)+'" cy="'+toY(v)+'" r="3.5" fill="#1a0d05" stroke="#e8b84b" stroke-width="2"/>';});
   svg.innerHTML=html;
   if(labEl){var step=Math.max(1,Math.ceil(n/6));labEl.innerHTML=filtered.map(function(r,i){if(i%step!==0&&i!==n-1)return'<span></span>';var d=(r.date||r.data||"").split(".");return'<span>'+(d.length>=2?d[0]+"/"+d[1]:(r.date||r.data||""))+'</span>';}).join("");}
 
