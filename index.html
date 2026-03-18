@@ -2111,80 +2111,64 @@ function filtraFat(f){
 }
 
 function renderFatture(){
-  // Se tab Archivées → carica da GAS
-  if(mFiltroFat==="archivees"){
-    var fatEl=document.getElementById("m-fat-lista");
-    if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement archives...</div>';
-    document.getElementById("m-fat-ok").textContent="—";
-    document.getElementById("m-fat-warn").textContent="—";
-    gasGet("get_factures_archivees").then(function(res){
-      if(!res.ok||!res.factures||res.factures.length===0){
-        if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">📁</span>Aucune facture archivée</div>';
-        return;
-      }
-      document.getElementById("m-fat-ok").textContent=res.factures.length;
-      if(fatEl) fatEl.innerHTML=res.factures.map(function(f){
-        var em=FORN_EMOJI[normForn(f.forn)]||"🏪";
-        return '<div class="fat-card" style="border-color:rgba(232,184,75,0.3)">'+
-          '<div class="fat-header">'+
-            '<span class="fat-emoji">'+em+'</span>'+
-            '<div class="fat-info">'+
-              '<div class="fat-forn">'+f.forn+'</div>'+
-              '<div class="fat-meta">📅 '+parseDateFR(f.date)+'</div>'+
-            '</div>'+
-            '<div class="fat-right">'+
-              '<div class="fat-montant">'+(f.montant>0?"CHF "+f.montant.toFixed(2):"—")+'</div>'+
-              '<span style="color:var(--or);font-size:11px">📁 Archivée</span>'+
-            '</div>'+
-          '</div>'+
-        '</div>';
-      }).join("");
-    }).catch(function(){
-      if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span>Erreur réseau</div>';
-    });
-    return;
-  }
+  var fatEl=document.getElementById("m-fat-lista");
+  if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>';
+  document.getElementById("m-fat-ok").textContent="—";
+  document.getElementById("m-fat-warn").textContent="—";
 
-  // Usa cOrdini (stato=ricevuto) se disponibile, altrimenti FATTURE_DEMO
-  var source;
-  if(cOrdini.length>0){
-    source=cOrdini.filter(function(o){return o.stato==="ricevuto"&&!o.fattura_ok;}).map(function(o){
-      return {id:"ACH-"+String(o.id).substring(0,8),forn:o.forn,emoji:o.emoji||"🏪",data:o.data,montant:o.montant||0,stato:o.diff?"warning":"ok",ordine_id:String(o.id).substring(0,10),diff:o.diff||null,rowIndex:o.rowIndex||0};
+  gasGet("get_historique").then(function(res){
+    if(!res.ok){ if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span>Erreur réseau</div>'; return; }
+
+    // Combina fatture HISTORIQUE + ordini ACHATS
+    var factures=(res.factures||[]).map(function(f){
+      return {source:"HISTORIQUE",forn:f.forn,emoji:FORN_EMOJI[normForn(f.forn)]||"🏪",data:f.date,montant:f.montant||0,produits:f.produits||0,stato:"ok"};
     });
+    var achats=(res.achats||[]).filter(function(a){return a.montant>0;}).map(function(a){
+      return {source:"ACHATS",forn:a.forn,emoji:FORN_EMOJI[normForn(a.forn)]||"🏪",data:a.date,montant:a.montant||0,produit:a.produit||"",qty:a.qty||"",stato:"ok",rowIndex:a.rowIndex||0};
+    });
+
+    var source=factures.concat(achats);
     source.sort(function(a,b){return (b.data||"").localeCompare(a.data||"");});
-  } else {
-    source=FATTURE_DEMO;
-  }
-  var ok=source.filter(function(f){return f.stato==="ok";}).length;
-  var warn=source.filter(function(f){return f.stato==="warning";}).length;
-  document.getElementById("m-fat-ok").textContent=ok;
-  document.getElementById("m-fat-warn").textContent=warn;
-  var lista=mFiltroFat==="tutti"?source:source.filter(function(f){return f.stato===mFiltroFat;});
-  if(lista.length===0){
-    document.getElementById("m-fat-lista").innerHTML='<div class="empty-state"><span class="empty-icon">✅</span>Aucune facture</div>';
-    return;
-  }
-  document.getElementById("m-fat-lista").innerHTML=lista.map(function(f){
-    var iW=f.stato==="warning";
-    var df=parseDateFR(f.data);
-    return '<div class="fat-card'+(iW?" warning":"")+'">'+
-      '<div class="fat-header">'+
-        '<span class="fat-emoji">'+(f.emoji||"🏪")+'</span>'+
-        '<div class="fat-info">'+
-          '<div class="fat-forn">'+f.forn+'</div>'+
-          '<div class="fat-meta">📅 '+df+' · '+(f.ordine_id||f.id||"")+'</div>'+
-        '</div>'+
-        '<div class="fat-right">'+
-          '<div class="fat-montant">'+(f.montant>0?"CHF "+f.montant.toFixed(2):"—")+'</div>'+
-          '<div>'+(iW?'<span class="stato-warn">⚠️ Écart</span>':'<span class="stato-ok">✅ OK</span>')+'</div>'+
-        '</div>'+
-      '</div>'+
-      (iW&&f.diff?'<div class="fat-diff">⚠️ '+f.diff+'</div>':"")+
-      (!iW&&f.rowIndex?'<button onclick="archiverFacture('+f.rowIndex+','+f.montant+')" style="margin-top:8px;width:100%;background:var(--vert);color:#fff;border:none;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Archiver cette facture</button>':"")+
-    '</div>';
-  }).join("");
-}
 
+    // Filtra per tab attivo
+    if(mFiltroFat==="ok")      source=source.filter(function(f){return f.stato==="ok";});
+    if(mFiltroFat==="warning") source=source.filter(function(f){return f.stato==="warning";});
+    if(mFiltroFat==="archivees") source=factures; // solo HISTORIQUE
+
+    var ok=source.filter(function(f){return f.stato==="ok";}).length;
+    var warn=source.filter(function(f){return f.stato==="warning";}).length;
+    document.getElementById("m-fat-ok").textContent=factures.length;
+    document.getElementById("m-fat-warn").textContent=warn||0;
+
+    if(source.length===0){
+      if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>Aucune facture</div>';
+      return;
+    }
+
+    if(fatEl) fatEl.innerHTML=source.map(function(f){
+      var isHist=f.source==="HISTORIQUE";
+      return '<div class="fat-card">'+
+        '<div class="fat-header">'+
+          '<span class="fat-emoji">'+(f.emoji||"🏪")+'</span>'+
+          '<div class="fat-info">'+
+            '<div class="fat-forn">'+f.forn+'</div>'+
+            '<div class="fat-meta">📅 '+parseDateFR(f.data)+
+              (isHist?' · <span style="color:var(--vert);font-size:10px">✅ Enregistrée</span>':' · <span style="color:var(--or);font-size:10px">📦 Livraison</span>')+
+            '</div>'+
+            (isHist&&f.produits?'<div style="color:var(--gris);font-size:11px">'+f.produits+' produit(s)</div>':'')+ 
+            (!isHist&&f.produit?'<div style="color:var(--gris);font-size:11px">'+f.produit+(f.qty?' · '+f.qty:'')+'</div>':'')+
+          '</div>'+
+          '<div class="fat-right">'+
+            '<div class="fat-montant">'+(f.montant>0?"CHF "+f.montant.toFixed(2):"—")+'</div>'+
+            '<span class="stato-ok">✅ OK</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join("");
+  }).catch(function(){
+    if(fatEl) fatEl.innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span>Erreur réseau</div>';
+  });
+}
 function archiverFacture(rowIndex, montant){
   if(!confirm("Archiver cette facture ?")) return;
   gasPost({action:"archiver_facture",rowIndex:rowIndex,montant:montant}).then(function(res){
