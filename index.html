@@ -643,21 +643,7 @@
       <!-- KPI grid -->
       <div class="kpi-grid" id="m-kpi-grid"></div>
 
-      <!-- Grafico linee spese per fornitore -->
-      <div class="chart-card" id="m-line-card">
-        <div class="chart-title">📈 Dépenses dans le temps</div>
-        <!-- Toggle fornitori -->
-        <div id="m-line-toggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
-        <!-- SVG grafico -->
-        <div style="position:relative;width:100%">
-          <svg id="m-line-svg" width="100%" height="140" viewBox="0 0 320 140" preserveAspectRatio="xMidYMid meet" style="display:block"></svg>
-          <div id="m-line-labels" style="display:flex;justify-content:space-between;padding:0 2px;margin-top:2px;font-size:9px;color:var(--gris)"></div>
-        </div>
-        <!-- Totale periodo -->
-        <div id="m-line-total" style="text-align:right;margin-top:8px;font-size:11px;color:var(--gris)"></div>
-      </div>
-
-      <!-- Donut interattivo -->
+      <!-- Donut interattivo — PRIMO -->
       <div class="chart-card">
         <div class="chart-title">🥧 Répartition par fournisseur</div>
         <div style="display:flex;align-items:center;gap:16px">
@@ -670,11 +656,24 @@
           </div>
           <div id="m-donut-legend" style="display:flex;flex-direction:column;gap:8px;flex:1"></div>
         </div>
-        <!-- Dettaglio fornitore selezionato -->
         <div id="m-donut-detail" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"></div>
       </div>
 
-      <!-- Mini grafico coperti -->
+      <!-- Grafico linee spese nel tempo — SECONDO, mostra tutti i dati disponibili -->
+      <div class="chart-card" id="m-line-card">
+        <div class="chart-title" style="justify-content:space-between">
+          <span>📈 Dépenses dans le temps</span>
+          <span id="m-line-period-lbl" style="font-size:10px;color:var(--gris);font-weight:400"></span>
+        </div>
+        <div id="m-line-toggles" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+        <div style="position:relative;width:100%">
+          <svg id="m-line-svg" width="100%" height="140" viewBox="0 0 320 140" preserveAspectRatio="xMidYMid meet" style="display:block"></svg>
+          <div id="m-line-labels" style="display:flex;justify-content:space-between;padding:0 2px;margin-top:2px;font-size:9px;color:var(--gris)"></div>
+        </div>
+        <div id="m-line-total" style="text-align:right;margin-top:8px;font-size:11px;color:var(--gris)"></div>
+      </div>
+
+      <!-- Mini grafico coperti — TERZO -->
       <div class="chart-card" id="m-cop-mini-card">
         <div class="chart-title" style="margin-bottom:8px">👥 Couverts — 7 derniers jours</div>
         <svg id="m-cop-mini-chart" width="100%" height="70" viewBox="0 0 300 70" preserveAspectRatio="xMidYMid meet" style="display:block"></svg>
@@ -894,12 +893,12 @@ var FATTURE_DEMO = [
 // ── Normalizzazione fornitori ──────────────────────────────
 function normForn(n) {
   if (!n) return n;
-  var s = n.toLowerCase().trim();
+  var s = n.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   if (s.includes("transgourmet") || s.includes("trans gourmet")) return "Transgourmet";
   if (s.includes("chaudron")) return "Fromages Chaudron";
   if (s.includes("maitre boucher") || s.includes("maître boucher")) return "Maître Boucher";
   if (s.includes("leguriviera") || s.includes("léguriviera")) return "Léguriviera";
-  if (s.includes("delmaitre") || s.includes("del maitre")) return "DelMaitre";
+  if (s.includes("delmaitre") || s.includes("del maitre") || s.includes("del maître")) return "DelMaitre";
   if (s.includes("volailles")) return "Volailles Importation";
   return n.trim();
 }
@@ -1878,36 +1877,30 @@ function _filteredFattures(days){
   });
 }
 
-// ── Raggruppa spese per bucket temporale ─────────────────────
-function _buildLineData(days){
-  // Raggruppa per giorno/settimana/mese e per fornitore
-  var fatture=_filteredFattures(days);
+// ── Raggruppa spese per bucket temporale — USA TUTTI I DATI ─────────────────
+function _buildLineData(){
+  // Usa TUTTE le fatture disponibili (non filtrate per periodo KPI)
+  var fatture=(_dashData&&_dashData.factures)?_dashData.factures:[];
   var buckets={}, fornSet={};
 
+  // Raggruppa sempre per giorno (mostra evoluzione reale)
   fatture.forEach(function(f){
     var forn=normForn(f.forn)||f.forn||"Autre";
-    var dateKey=f.dateOnly||f.date.split(" ")[0]||"";
-    // Bucket: per settimana usa giorni, per mese usa settimane, per anno usa mesi
-    var bKey;
-    if(days<=7){ bKey=dateKey; }
-    else if(days<=30){
-      // Raggruppa per 5 giorni
-      var d=_parseD2(dateKey); if(!d) return;
-      var now=new Date(); var diff=Math.floor((now-d)/86400000);
-      bKey="D-"+Math.floor(diff/5)*5;
-    } else {
-      // Raggruppa per mese
-      var parts=dateKey.split(".");
-      bKey=parts.length>=3?(parts[1]+"."+parts[2]):"?";
-    }
-    if(!buckets[bKey]) buckets[bKey]={};
-    if(!buckets[bKey][forn]) buckets[bKey][forn]=0;
-    buckets[bKey][forn]+=(f.montant||0);
+    var dateKey=f.dateOnly||(f.date?f.date.split(" ")[0]:"");
+    if(!dateKey) return;
+    if(!buckets[dateKey]) buckets[dateKey]={};
+    if(!buckets[dateKey][forn]) buckets[dateKey][forn]=0;
+    buckets[dateKey][forn]+=(f.montant||0);
     fornSet[forn]=true;
   });
 
   var fornList=Object.keys(fornSet).sort();
-  var bucketList=Object.keys(buckets).sort();
+  // Ordina bucket per data
+  var bucketList=Object.keys(buckets).sort(function(a,b){
+    var da=_parseD2(a), db=_parseD2(b);
+    if(!da||!db) return 0;
+    return da-db;
+  });
   return {buckets:buckets, fornList:fornList, bucketList:bucketList};
 }
 
@@ -1962,10 +1955,14 @@ function renderDashboard(){
 
 // ── Grafico linee per fornitore ──────────────────────────────
 function _renderLineChart(days, perForn){
-  var lineData=_buildLineData(days);
+  var lineData=_buildLineData(); // TUTTI i dati, non filtrati
   var fornList=lineData.fornList;
   var bucketList=lineData.bucketList;
   var buckets=lineData.buckets;
+
+  // Label periodo sul titolo
+  var lblEl=document.getElementById("m-line-period-lbl");
+  if(lblEl) lblEl.textContent=bucketList.length>0?(bucketList[0]+" → "+bucketList[bucketList.length-1]):"";
 
   // Inizializza toggle se non esiste
   fornList.forEach(function(f){ if(_lineActive[f]===undefined) _lineActive[f]=true; });
@@ -2050,15 +2047,14 @@ function _renderLineChart(days, perForn){
 
   svg.innerHTML=html;
 
-  // Labels asse X
+  // Labels asse X — mostra date reali
   if(labEl){
     var step=Math.max(1,Math.ceil(bucketList.length/5));
     labEl.innerHTML=bucketList.map(function(b,i){
       if(i%step!==0&&i!==bucketList.length-1) return '<span></span>';
-      // Formatta label
-      var lbl=b;
-      if(b.startsWith("D-")){ var d=parseInt(b.replace("D-","")); lbl="-"+d+"j"; }
-      else if(b.match(/^\d{2}\.\d{4}/)){ lbl=b.split(".")[0]+"/"+b.split(".")[1].slice(2); }
+      // b è "dd.MM.yyyy" → mostra "dd/MM"
+      var parts=b.split(".");
+      var lbl=parts.length>=2?(parts[0]+"/"+parts[1]):b;
       return '<span>'+lbl+'</span>';
     }).join("");
   }
