@@ -1168,7 +1168,7 @@ function generaFornitori() {
     for(var pi=0;pi<f.prodotti.length;pi++){
       var p=f.prodotti[pi]; var cls=uniteClass(p.unite);
       var isKg=p.unite&&p.unite.toLowerCase().includes("kg");
-      var toggleHtml=isKg?'<div class="unit-toggle" id="ut-'+fi+'-'+pi+'"><span class="active" onclick="setUnitMode('+fi+','+pi+',\'kg\')">KG</span><span onclick="setUnitMode('+fi+','+pi+',\'g\')">G</span></div>':'';
+      var toggleHtml=isKg?'<div class="unit-toggle" id="ut-'+fi+'-'+pi+'"><span class="active" onclick="setUnitMode('+fi+','+pi+',\'kg\')">KG</span><span onclick="setUnitMode('+fi+','+pi+',\'g\')">G</span><span onclick="setUnitMode('+fi+','+pi+',\'pc\')">PC</span></div>':'';
       h+='<div class="prod-riga"><div class="prod-nome">'+p.nome+'</div><span class="unite-badge '+cls+'" id="ub-'+fi+'-'+pi+'">'+p.unite+'</span><div class="qty-wrap">'+toggleHtml+'<button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="-1">−</button><span class="qty-val" id="qv-'+fi+'-'+pi+'">0</span><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="1">+</button></div></div>';
     }
     panel.innerHTML=h; c.appendChild(item); c.appendChild(panel);
@@ -1198,13 +1198,14 @@ var _cqLock = false;
 function setUnitMode(fi,pi,mode){
   var key=fi+"-"+pi;
   cUnitMode[key]=mode;
-  // Aggiorna toggle UI
   var ut=document.getElementById("ut-"+fi+"-"+pi);
   if(ut){ut.querySelectorAll("span").forEach(function(s){s.classList.toggle("active",s.textContent.toLowerCase()===mode);});}
-  // Aggiorna badge unità
   var ub=document.getElementById("ub-"+fi+"-"+pi);
-  if(ub) ub.textContent=mode.toUpperCase();
-  // Reset quantità a 0 quando si cambia unità
+  if(ub){
+    if(mode==="kg") ub.textContent="KG";
+    else if(mode==="g") ub.textContent="G";
+    else if(mode==="pc") ub.textContent="PC";
+  }
   cQuantita[fi][pi]=0;
   var el=document.getElementById("qv-"+fi+"-"+pi);
   if(el){el.textContent="0";el.className="qty-val";}
@@ -1216,11 +1217,11 @@ function cambiaQty(fi,pi,delta){
   var isKg=FORNITORI[fi]&&FORNITORI[fi].prodotti[pi]&&(FORNITORI[fi].prodotti[pi].unite||"").toLowerCase().includes("kg");
   var mode=isKg?(cUnitMode[fi+"-"+pi]||"kg"):"";
   var step=1;
-  if(mode==="g") step=50; // incrementa di 50g
+  if(mode==="g") step=50;
+  // PC e KG: step=1
   cQuantita[fi][pi]=Math.max(0,(cQuantita[fi][pi]||0)+(delta*step));
   var el=document.getElementById("qv-"+fi+"-"+pi);
-  var displayVal=cQuantita[fi][pi];
-  if(el){el.textContent=displayVal;el.className="qty-val"+(displayVal>0?" nonzero":"");}
+  if(el){el.textContent=cQuantita[fi][pi];el.className="qty-val"+(cQuantita[fi][pi]>0?" nonzero":"");}
   aggiornaRiepilogo();
 }
 
@@ -1229,14 +1230,14 @@ function aggiornaRiepilogo(){
   for(var fi=0;fi<FORNITORI.length;fi++){
     var f=FORNITORI[fi],righe=[];
     for(var pi=0;pi<f.prodotti.length;pi++){
-      var qty=cQuantita[fi][pi]||0;
       if(qty>0){
         var p=f.prodotti[pi];
         var isKg=p.unite&&p.unite.toLowerCase().includes("kg");
         var mode=isKg?(cUnitMode[fi+"-"+pi]||"kg"):"";
-        var displayQty=qty;
-        var displayUnit=p.unite;
+        var displayQty, displayUnit;
         if(mode==="g"){displayQty=qty+"g"; displayUnit="";}
+        else if(mode==="pc"){displayQty=qty+" PC"; displayUnit="";}
+        else{displayQty=qty; displayUnit=p.unite;}
         righe.push('<div class="riepilogo-prod"><span class="riepilogo-prod-nome">'+p.nome+'</span><span class="riepilogo-prod-qty">'+displayQty+(displayUnit?" "+displayUnit:"")+'</span></div>');
       }
     }
@@ -1261,9 +1262,11 @@ function inviaOrdine(){
           var mode2=isKg2?(cUnitMode[fi+"-"+pi]||"kg"):"";
           var qtyFinal, uniteFinal;
           if(mode2==="g"){
-            // Converte grammi in decimali kg per il GAS
             qtyFinal=(cQuantita[fi][pi]/1000);
             uniteFinal="KG";
+          } else if(mode2==="pc"){
+            qtyFinal=cQuantita[fi][pi];
+            uniteFinal="PC";
           } else {
             qtyFinal=cQuantita[fi][pi];
             uniteFinal=p2.unite;
