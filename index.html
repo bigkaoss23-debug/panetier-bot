@@ -167,6 +167,9 @@
     .qty-btn:active{transform:scale(0.85)}
     .qty-val{color:var(--beige);font-size:15px;min-width:20px;text-align:center;font-weight:500}
     .qty-val.nonzero{color:var(--or-clair)}
+    .unit-toggle{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);flex-shrink:0}
+    .unit-toggle span{padding:3px 6px;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;color:var(--gris);background:var(--card);user-select:none}
+    .unit-toggle span.active{background:var(--or);color:var(--bg)}
     .riepilogo{background:var(--card);border:1px solid var(--or);border-radius:14px;padding:16px;margin-bottom:16px}
     .riepilogo-title{color:var(--creme);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;opacity:0.8}
     .riepilogo-block{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
@@ -961,6 +964,7 @@ var RUOLI = {
 
 // Cucina state
 var cQuantita = [];
+var cUnitMode = {}; // { "fi-pi": "kg" | "g" } — default kg
 var cOrdini   = [];
 var cFiltroAchats = "tutti";
 var cOrdiniInviati = []; // ordini confermati pronti per l'invio
@@ -1163,7 +1167,9 @@ function generaFornitori() {
     var h="";
     for(var pi=0;pi<f.prodotti.length;pi++){
       var p=f.prodotti[pi]; var cls=uniteClass(p.unite);
-      h+='<div class="prod-riga"><div class="prod-nome">'+p.nome+'</div><span class="unite-badge '+cls+'">'+p.unite+'</span><div class="qty-wrap"><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="-1">−</button><span class="qty-val" id="qv-'+fi+'-'+pi+'">0</span><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="1">+</button></div></div>';
+      var isKg=p.unite&&p.unite.toLowerCase().includes("kg");
+      var toggleHtml=isKg?'<div class="unit-toggle" id="ut-'+fi+'-'+pi+'"><span class="active" onclick="setUnitMode('+fi+','+pi+',\'kg\')">KG</span><span onclick="setUnitMode('+fi+','+pi+',\'g\')">G</span></div>':'';
+      h+='<div class="prod-riga"><div class="prod-nome">'+p.nome+'</div><span class="unite-badge '+cls+'" id="ub-'+fi+'-'+pi+'">'+p.unite+'</span><div class="qty-wrap">'+toggleHtml+'<button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="-1">−</button><span class="qty-val" id="qv-'+fi+'-'+pi+'">0</span><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="1">+</button></div></div>';
     }
     panel.innerHTML=h; c.appendChild(item); c.appendChild(panel);
   }
@@ -1189,12 +1195,32 @@ function toggleForn(fi) {
 }
 
 var _cqLock = false;
+function setUnitMode(fi,pi,mode){
+  var key=fi+"-"+pi;
+  cUnitMode[key]=mode;
+  // Aggiorna toggle UI
+  var ut=document.getElementById("ut-"+fi+"-"+pi);
+  if(ut){ut.querySelectorAll("span").forEach(function(s){s.classList.toggle("active",s.textContent.toLowerCase()===mode);});}
+  // Aggiorna badge unità
+  var ub=document.getElementById("ub-"+fi+"-"+pi);
+  if(ub) ub.textContent=mode.toUpperCase();
+  // Reset quantità a 0 quando si cambia unità
+  cQuantita[fi][pi]=0;
+  var el=document.getElementById("qv-"+fi+"-"+pi);
+  if(el){el.textContent="0";el.className="qty-val";}
+  aggiornaRiepilogo();
+}
 function cambiaQty(fi,pi,delta){
   if(_cqLock) return;
   _cqLock=true; setTimeout(function(){_cqLock=false;},200);
-  cQuantita[fi][pi]=Math.max(0,(cQuantita[fi][pi]||0)+delta);
+  var isKg=FORNITORI[fi]&&FORNITORI[fi].prodotti[pi]&&(FORNITORI[fi].prodotti[pi].unite||"").toLowerCase().includes("kg");
+  var mode=isKg?(cUnitMode[fi+"-"+pi]||"kg"):"";
+  var step=1;
+  if(mode==="g") step=50; // incrementa di 50g
+  cQuantita[fi][pi]=Math.max(0,(cQuantita[fi][pi]||0)+(delta*step));
   var el=document.getElementById("qv-"+fi+"-"+pi);
-  if(el){el.textContent=cQuantita[fi][pi];el.className="qty-val"+(cQuantita[fi][pi]>0?" nonzero":"");}
+  var displayVal=cQuantita[fi][pi];
+  if(el){el.textContent=displayVal;el.className="qty-val"+(displayVal>0?" nonzero":"");}
   aggiornaRiepilogo();
 }
 
@@ -1203,7 +1229,16 @@ function aggiornaRiepilogo(){
   for(var fi=0;fi<FORNITORI.length;fi++){
     var f=FORNITORI[fi],righe=[];
     for(var pi=0;pi<f.prodotti.length;pi++){
-      if((cQuantita[fi][pi]||0)>0){var p=f.prodotti[pi];righe.push('<div class="riepilogo-prod"><span class="riepilogo-prod-nome">'+p.nome+'</span><span class="riepilogo-prod-qty">'+cQuantita[fi][pi]+' '+p.unite+'</span></div>');}
+      var qty=cQuantita[fi][pi]||0;
+      if(qty>0){
+        var p=f.prodotti[pi];
+        var isKg=p.unite&&p.unite.toLowerCase().includes("kg");
+        var mode=isKg?(cUnitMode[fi+"-"+pi]||"kg"):"";
+        var displayQty=qty;
+        var displayUnit=p.unite;
+        if(mode==="g"){displayQty=qty+"g"; displayUnit="";}
+        righe.push('<div class="riepilogo-prod"><span class="riepilogo-prod-nome">'+p.nome+'</span><span class="riepilogo-prod-qty">'+displayQty+(displayUnit?" "+displayUnit:"")+'</span></div>');
+      }
     }
     if(righe.length>0) blocchi.push('<div class="riepilogo-block"><div class="riepilogo-forn">'+f.emoji+' '+f.nome+'</div>'+righe.join("")+'</div>');
   }
@@ -1219,13 +1254,29 @@ function inviaOrdine(){
     var ordres=[];
     for(var fi=0;fi<FORNITORI.length;fi++){
       var f=FORNITORI[fi],prodotti=[];
-      for(var pi=0;pi<f.prodotti.length;pi++){if((cQuantita[fi][pi]||0)>0) prodotti.push({nome:f.prodotti[pi].nome,qty:cQuantita[fi][pi],unite:f.prodotti[pi].unite});}
+      for(var pi=0;pi<f.prodotti.length;pi++){
+        if((cQuantita[fi][pi]||0)>0){
+          var p2=f.prodotti[pi];
+          var isKg2=p2.unite&&p2.unite.toLowerCase().includes("kg");
+          var mode2=isKg2?(cUnitMode[fi+"-"+pi]||"kg"):"";
+          var qtyFinal, uniteFinal;
+          if(mode2==="g"){
+            // Converte grammi in decimali kg per il GAS
+            qtyFinal=(cQuantita[fi][pi]/1000);
+            uniteFinal="KG";
+          } else {
+            qtyFinal=cQuantita[fi][pi];
+            uniteFinal=p2.unite;
+          }
+          prodotti.push({nome:p2.nome,qty:qtyFinal,unite:uniteFinal});
+        }
+      }
       if(prodotti.length===0) continue;
       ordres.push({fournisseur:f.nome,emoji:f.emoji,date_livraison:data,note:note,produits:prodotti,qui:"App Cuisine"});
     }
     if(ordres.length===0){toast("Entrez au moins une quantité",true);return;}
     toast("⏳ Envoi en cours...");
-    gasPost({action:"nouvel_ordre", ordres:ordres}).then(function(res){
+    gasPost({action:"nouvel_ordre", ordres:ordres, notify_staff:false}).then(function(res){
       if(res && res.ok){
         toast("✅ "+ordres.length+" ordre"+(ordres.length>1?"s":"")+" envoyé"+(ordres.length>1?"s":"")+" !");
         setTimeout(function(){
@@ -1247,6 +1298,7 @@ function inviaOrdine(){
 }
 
 function resetCucina(){
+  cUnitMode={};
   try{document.getElementById("c-input-note").value="";}catch(e){}
   try{document.getElementById("c-riepilogo").style.display="none";}catch(e){}
   try{
