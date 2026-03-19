@@ -154,22 +154,44 @@
     .prod-riga{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
     .prod-riga:last-child{border-bottom:none;padding-bottom:0}
     .prod-nome{flex:1;color:var(--beige);font-size:13px;line-height:1.3;min-width:0}
-    .unite-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap;flex-shrink:0;text-transform:uppercase}
-    .u-kg{background:rgba(39,174,96,0.2);color:#7ec87e;border:1px solid rgba(39,174,96,0.4)}
-    .u-pce{background:rgba(200,146,42,0.2);color:var(--or-clair);border:1px solid rgba(200,146,42,0.4)}
-    .u-bot{background:rgba(41,128,185,0.2);color:#5dade2;border:1px solid rgba(41,128,185,0.4)}
-    .u-ct{background:rgba(142,68,173,0.2);color:#c39bd3;border:1px solid rgba(142,68,173,0.4)}
-    .u-pc{background:rgba(231,76,60,0.2);color:#e87970;border:1px solid rgba(231,76,60,0.4)}
-    .u-bq{background:rgba(22,160,133,0.2);color:#76d7c4;border:1px solid rgba(22,160,133,0.4)}
-    .u-other{background:rgba(138,112,96,0.2);color:var(--gris);border:1px solid rgba(138,112,96,0.4)}
+    /* ── Badge unità statici ── */
+    .unite-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap;flex-shrink:0;text-transform:uppercase}
+    .u-pce{background:rgba(200,146,42,0.15);color:var(--or-clair);border:1px solid rgba(200,146,42,0.3)}
+    .u-bot{background:rgba(41,128,185,0.15);color:#5dade2;border:1px solid rgba(41,128,185,0.3)}
+    .u-ct{background:rgba(142,68,173,0.15);color:#c39bd3;border:1px solid rgba(142,68,173,0.3)}
+    .u-bq{background:rgba(22,160,133,0.15);color:#76d7c4;border:1px solid rgba(22,160,133,0.3)}
+    .u-other{background:rgba(138,112,96,0.15);color:var(--gris);border:1px solid rgba(138,112,96,0.3)}
+    /* ── Badge KG interattivo ── */
+    .unit-badge-kg{font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;flex-shrink:0;cursor:pointer;user-select:none;transition:all 0.15s;letter-spacing:0.5px}
+    .unit-badge-kg:active{transform:scale(0.92)}
+    .mode-kg{background:rgba(39,174,96,0.2);color:#7ec87e;border:1px solid rgba(39,174,96,0.5)}
+    .mode-g{background:rgba(230,126,34,0.2);color:#f0a060;border:1px solid rgba(230,126,34,0.5)}
+    .mode-pce{background:rgba(200,146,42,0.2);color:var(--or-clair);border:1px solid rgba(200,146,42,0.5)}
+    /* ── Qty ── */
     .qty-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
     .qty-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--or-clair);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;transition:all 0.15s}
     .qty-btn:active{transform:scale(0.85)}
     .qty-val{color:var(--beige);font-size:15px;min-width:20px;text-align:center;font-weight:500}
     .qty-val.nonzero{color:var(--or-clair)}
-    .unit-toggle{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);flex-shrink:0}
-    .unit-toggle span{padding:3px 6px;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s;color:var(--gris);background:var(--card);user-select:none}
-    .unit-toggle span.active{background:var(--or);color:var(--bg)}
+    /* ── Bottom Sheet ── */
+    .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:200;pointer-events:none;transition:background 0.25s}
+    .sheet-overlay.open{background:rgba(0,0,0,0.6);pointer-events:all}
+    .unit-sheet{position:fixed;bottom:0;left:0;right:0;background:#2a1508;border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:0 20px 40px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);z-index:201}
+    .unit-sheet.open{transform:translateY(0)}
+    .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px}
+    .sheet-prodlabel{color:var(--gris);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+    .sheet-prodname{color:var(--or-clair);font-size:15px;font-weight:600;margin-bottom:18px;line-height:1.3}
+    .sheet-options{display:flex;flex-direction:column;gap:10px}
+    .sheet-opt{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:all 0.15s}
+    .sheet-opt:active{transform:scale(0.98)}
+    .sheet-opt.selected{border-color:var(--or);background:var(--card2)}
+    .sheet-opt-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+    .sheet-opt-info{flex:1}
+    .sheet-opt-label{color:var(--beige);font-size:14px;font-weight:500}
+    .sheet-opt-desc{color:var(--gris);font-size:11px;margin-top:2px}
+    .sheet-opt-check{color:var(--or-clair);font-size:16px;opacity:0;flex-shrink:0}
+    .sheet-opt.selected .sheet-opt-check{opacity:1}
+    .sheet-memory{display:flex;align-items:center;gap:6px;color:var(--gris);font-size:11px;margin-top:14px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border)}
     .riepilogo{background:var(--card);border:1px solid var(--or);border-radius:14px;padding:16px;margin-bottom:16px}
     .riepilogo-title{color:var(--creme);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;opacity:0.8}
     .riepilogo-block{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
@@ -748,6 +770,41 @@
   </div>
 </div>
 
+<!-- ══ UNIT BOTTOM SHEET ══ -->
+<div class="sheet-overlay" id="unit-overlay" onclick="closeUnitSheet()"></div>
+<div class="unit-sheet" id="unit-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-prodlabel">Unité de commande</div>
+  <div class="sheet-prodname" id="unit-sheet-name">—</div>
+  <div class="sheet-options">
+    <div class="sheet-opt" data-mode="kg" onclick="selectUnitMode('kg')">
+      <div class="sheet-opt-icon">⚖️</div>
+      <div class="sheet-opt-info">
+        <div class="sheet-opt-label">KG — Kilogrammes</div>
+        <div class="sheet-opt-desc">Incremento di 1 KG per tap</div>
+      </div>
+      <span class="sheet-opt-check">✓</span>
+    </div>
+    <div class="sheet-opt" data-mode="g" onclick="selectUnitMode('g')">
+      <div class="sheet-opt-icon">🔬</div>
+      <div class="sheet-opt-info">
+        <div class="sheet-opt-label">G — Grammes</div>
+        <div class="sheet-opt-desc">Incremento di 50g per tap</div>
+      </div>
+      <span class="sheet-opt-check">✓</span>
+    </div>
+    <div class="sheet-opt" data-mode="pce" onclick="selectUnitMode('pce')">
+      <div class="sheet-opt-icon">📦</div>
+      <div class="sheet-opt-info">
+        <div class="sheet-opt-label">PCE — Pièces</div>
+        <div class="sheet-opt-desc">Barchette, pezzi, confezioni</div>
+      </div>
+      <span class="sheet-opt-check">✓</span>
+    </div>
+  </div>
+  <div class="sheet-memory">💾 La tua scelta viene ricordata per questo prodotto</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1168,8 +1225,18 @@ function generaFornitori() {
     for(var pi=0;pi<f.prodotti.length;pi++){
       var p=f.prodotti[pi]; var cls=uniteClass(p.unite);
       var isKg=p.unite&&p.unite.toLowerCase().includes("kg");
-      var toggleHtml=isKg?'<div class="unit-toggle" id="ut-'+fi+'-'+pi+'"><span class="active" onclick="setUnitMode('+fi+','+pi+',\'kg\')">KG</span><span onclick="setUnitMode('+fi+','+pi+',\'g\')">G</span><span onclick="setUnitMode('+fi+','+pi+',\'pc\')">PC</span></div>':'';
-      h+='<div class="prod-riga"><div class="prod-nome">'+p.nome+'</div><span class="unite-badge '+cls+'" id="ub-'+fi+'-'+pi+'">'+p.unite+'</span><div class="qty-wrap">'+toggleHtml+'<button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="-1">−</button><span class="qty-val" id="qv-'+fi+'-'+pi+'">0</span><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="1">+</button></div></div>';
+      var prodKey="forn"+fi+"prod"+pi;
+      var savedMode=_loadUnitMode(prodKey);
+      var initMode=savedMode||(isKg?"kg":"");
+      var badgeHtml;
+      if(isKg){
+        var modeClass=initMode==="g"?"mode-g":initMode==="pce"?"mode-pce":"mode-kg";
+        var modeLabel=initMode==="g"?"G":initMode==="pce"?"PCE":"KG";
+        badgeHtml='<div class="unit-badge-kg '+modeClass+'" id="ub-'+fi+'-'+pi+'" onclick="openUnitSheet('+fi+','+pi+')">'+modeLabel+'</div>';
+      } else {
+        badgeHtml='<span class="unite-badge '+cls+'" id="ub-'+fi+'-'+pi+'">'+p.unite+'</span>';
+      }
+      h+='<div class="prod-riga"><div class="prod-nome">'+p.nome+'</div>'+badgeHtml+'<div class="qty-wrap"><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="-1">−</button><span class="qty-val" id="qv-'+fi+'-'+pi+'">0</span><button class="qty-btn" data-fi="'+fi+'" data-pi="'+pi+'" data-delta="1">+</button></div></div>';
     }
     panel.innerHTML=h; c.appendChild(item); c.appendChild(panel);
   }
@@ -1194,31 +1261,68 @@ function toggleForn(fi) {
   if(!isOpen){setTimeout(function(){item.scrollIntoView({behavior:"smooth",block:"nearest"});},100);}
 }
 
-var _cqLock = false;
-function setUnitMode(fi,pi,mode){
+// ═══════════════════════════════════════════════════
+// UNIT BOTTOM SHEET — KG / G / PCE
+// ═══════════════════════════════════════════════════
+var _unitSheetFi = null;
+var _unitSheetPi = null;
+var _UNIT_STEPS  = {kg:1, g:50, pce:1};
+var _UNIT_LABELS = {kg:"KG", g:"G", pce:"PCE"};
+var _UNIT_CLASSES= {kg:"mode-kg", g:"mode-g", pce:"mode-pce"};
+
+function _loadUnitMode(key){
+  try{ return localStorage.getItem("umode_"+key)||null; }catch(e){ return null; }
+}
+function _saveUnitMode(key, mode){
+  try{ localStorage.setItem("umode_"+key, mode); }catch(e){}
+}
+
+function openUnitSheet(fi,pi){
+  _unitSheetFi=fi; _unitSheetPi=pi;
+  var prodKey="forn"+fi+"prod"+pi;
+  var cur=cUnitMode[fi+"-"+pi]||"kg";
+  var nome=FORNITORI[fi]&&FORNITORI[fi].prodotti[pi]?FORNITORI[fi].prodotti[pi].nome:"";
+  document.getElementById("unit-sheet-name").textContent=nome;
+  document.querySelectorAll(".sheet-opt").forEach(function(opt){
+    opt.classList.toggle("selected", opt.getAttribute("data-mode")===cur);
+  });
+  document.getElementById("unit-overlay").classList.add("open");
+  document.getElementById("unit-sheet").classList.add("open");
+}
+
+function closeUnitSheet(){
+  document.getElementById("unit-overlay").classList.remove("open");
+  document.getElementById("unit-sheet").classList.remove("open");
+  _unitSheetFi=null; _unitSheetPi=null;
+}
+
+function selectUnitMode(mode){
+  var fi=_unitSheetFi, pi=_unitSheetPi;
+  if(fi===null||pi===null) return;
   var key=fi+"-"+pi;
+  var prodKey="forn"+fi+"prod"+pi;
   cUnitMode[key]=mode;
-  var ut=document.getElementById("ut-"+fi+"-"+pi);
-  if(ut){ut.querySelectorAll("span").forEach(function(s){s.classList.toggle("active",s.textContent.toLowerCase()===mode);});}
-  var ub=document.getElementById("ub-"+fi+"-"+pi);
-  if(ub){
-    if(mode==="kg") ub.textContent="KG";
-    else if(mode==="g") ub.textContent="G";
-    else if(mode==="pc") ub.textContent="PC";
+  _saveUnitMode(prodKey, mode);
+  var badge=document.getElementById("ub-"+fi+"-"+pi);
+  if(badge){
+    badge.className="unit-badge-kg "+_UNIT_CLASSES[mode];
+    badge.textContent=_UNIT_LABELS[mode];
   }
+  // Reset qty
   cQuantita[fi][pi]=0;
   var el=document.getElementById("qv-"+fi+"-"+pi);
   if(el){el.textContent="0";el.className="qty-val";}
   aggiornaRiepilogo();
+  closeUnitSheet();
 }
+
+var _cqLock = false;
 function cambiaQty(fi,pi,delta){
   if(_cqLock) return;
   _cqLock=true; setTimeout(function(){_cqLock=false;},200);
   var isKg=FORNITORI[fi]&&FORNITORI[fi].prodotti[pi]&&(FORNITORI[fi].prodotti[pi].unite||"").toLowerCase().includes("kg");
   var mode=isKg?(cUnitMode[fi+"-"+pi]||"kg"):"";
-  var step=1;
-  if(mode==="g") step=50;
-  // PC e KG: step=1
+  var step=isKg?(_UNIT_STEPS[mode]||1):1;
   cQuantita[fi][pi]=Math.max(0,(cQuantita[fi][pi]||0)+(delta*step));
   var el=document.getElementById("qv-"+fi+"-"+pi);
   if(el){el.textContent=cQuantita[fi][pi];el.className="qty-val"+(cQuantita[fi][pi]>0?" nonzero":"");}
@@ -1236,7 +1340,7 @@ function aggiornaRiepilogo(){
         var mode=isKg?(cUnitMode[fi+"-"+pi]||"kg"):"";
         var displayQty, displayUnit;
         if(mode==="g"){displayQty=qty+"g"; displayUnit="";}
-        else if(mode==="pc"){displayQty=qty+" PC"; displayUnit="";}
+        else if(mode==="pce"){displayQty=qty+" PCE"; displayUnit="";}
         else{displayQty=qty; displayUnit=p.unite;}
         righe.push('<div class="riepilogo-prod"><span class="riepilogo-prod-nome">'+p.nome+'</span><span class="riepilogo-prod-qty">'+displayQty+(displayUnit?" "+displayUnit:"")+'</span></div>');
       }
@@ -1264,9 +1368,9 @@ function inviaOrdine(){
           if(mode2==="g"){
             qtyFinal=(cQuantita[fi][pi]/1000);
             uniteFinal="KG";
-          } else if(mode2==="pc"){
+          } else if(mode2==="pce"){
             qtyFinal=cQuantita[fi][pi];
-            uniteFinal="PC";
+            uniteFinal="PCE";
           } else {
             qtyFinal=cQuantita[fi][pi];
             uniteFinal=p2.unite;
@@ -1302,6 +1406,13 @@ function inviaOrdine(){
 
 function resetCucina(){
   cUnitMode={};
+  // Ricarica memoria unità da localStorage
+  for(var fi=0;fi<FORNITORI.length;fi++){
+    for(var pi=0;pi<FORNITORI[fi].prodotti.length;pi++){
+      var saved=_loadUnitMode("forn"+fi+"prod"+pi);
+      if(saved) cUnitMode[fi+"-"+pi]=saved;
+    }
+  }
   try{document.getElementById("c-input-note").value="";}catch(e){}
   try{document.getElementById("c-riepilogo").style.display="none";}catch(e){}
   try{
