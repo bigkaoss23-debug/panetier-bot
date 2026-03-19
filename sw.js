@@ -1,6 +1,6 @@
 // Service Worker — Le Panetier Sion
 // Versione aggiornata automaticamente ad ogni deploy
-const CACHE = "panetier-v20260316";
+const CACHE = "panetier-v20260319";
 const FILES = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", e => {
