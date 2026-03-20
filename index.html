@@ -1155,6 +1155,7 @@ function managerTab(tab) {
   if(tab==="factures")   { renderFatture(); }
   if(tab==="coperti")    { renderManagerCoperti(); }
   if(tab==="commandes")  { renderManagerCommandes(); }
+  if(tab==="fournisseurs") { renderFornManager(); }
 }
 
 // ═══════════════════════════════════════════════════
@@ -2593,16 +2594,31 @@ function _loadCopertiMiniChart(){}
 function renderFornManager(){
   var source=cOrdini.length>0?cOrdini:[];
   var perForn={};
+
+  // Prima inizializza tutti i fornitori dall'array hardcodato
+  FORNITORI.forEach(function(f){
+    var fn=normForn(f.nome);
+    perForn[fn]={emoji:f.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0,nomeOrig:f.nome};
+  });
+
+  // Poi aggiunge i dati reali dagli ordini
   source.forEach(function(o){
-    if(!perForn[o.forn]) perForn[o.forn]={emoji:o.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0};
-    perForn[o.forn].n++;
-    if(o.stato==="ricevuto"){perForn[o.forn].tot+=(o.montant||0);perForn[o.forn].ricevuto++;}
-    if(o.stato==="attesa") perForn[o.forn].attesa++;
+    var fn=normForn(o.forn);
+    if(!perForn[fn]) perForn[fn]={emoji:o.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0,nomeOrig:o.forn};
+    perForn[fn].n++;
+    if(o.stato==="ricevuto"){perForn[fn].tot+=(o.montant||0);perForn[fn].ricevuto++;}
+    if(o.stato==="attesa") perForn[fn].attesa++;
   });
   var topPrezzi={};
-  CATALOGUE.forEach(function(p){if(!topPrezzi[p.forn])topPrezzi[p.forn]=[];topPrezzi[p.forn].push(p);});
-  Object.keys(topPrezzi).forEach(function(f){topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});topPrezzi[f]=topPrezzi[f].slice(0,3);});
-  var sorted=Object.keys(perForn).sort(function(a,b){return perForn[b].tot-perForn[a].tot;});
+  CATALOGUE.forEach(function(p){
+    var fn=normForn(p.forn);
+    if(!topPrezzi[fn])topPrezzi[fn]=[];
+    topPrezzi[fn].push(p);
+  });
+  Object.keys(topPrezzi).forEach(function(f){
+    topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});
+    topPrezzi[f]=topPrezzi[f].slice(0,3);
+  });
   document.getElementById("m-forn-cards").innerHTML=sorted.map(function(f){
     var g=perForn[f], top=topPrezzi[f]||[];
     return '<div class="forn-card">'+
