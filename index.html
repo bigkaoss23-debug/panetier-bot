@@ -1831,10 +1831,10 @@ function inviaCommande(){
   gasPost({action:"nouvelle_commande",client:nom,telephone:tel,date:date,heure:heure,produits:prodotti,note:document.getElementById("s-note").value.trim(),demandeur:"Salle"}).then(function(res){
     if(res && res.ok){
       toast("✅ Commande envoyée !");
-      // Aggiungi localmente già come Prêt (inserita dalla Salle = già confermata)
       sCommandes.unshift({
-        id: "CMD-"+Date.now(),
-        rowIndex: res.rowIndex || 0,
+        id: res.id || ("CMD-"+Date.now()),
+        cmdId: res.id || null,
+        rowIndex: 0,
         nom: nom, tel: tel, date: date, heure: heure,
         prodotti: prodotti.map(function(p){return {nome:p.nome,qty:p.qty};}),
         note: document.getElementById("s-note").value.trim(),
@@ -1877,13 +1877,8 @@ function eliminaCommande(id){
   if(idx===-1) return;
   var o=sCommandes[idx];
   sCommandes.splice(idx,1);
-  salvaLocale();
-  renderCommandes();
-  renderOggi();
-  // Elimina anche sul GAS se ha rowIndex
-  if(o.rowIndex&&o.rowIndex>0){
-    gasPost({action:"supprimer_commande",rowIndex:o.rowIndex}).catch(function(){});
-  }
+  salvaLocale(); renderCommandes(); renderOggi();
+  gasPost({action:"supprimer_commande", cmdId:o.cmdId, rowIndex:o.rowIndex}).catch(function(){});
   toast("🗑️ Commande supprimée");
 }
 
@@ -1957,33 +1952,19 @@ function confermaPronto(id){
   var o=sCommandes.find(function(x){return x.id===id;});
   if(!o) return;
   o.stato="pronto";
-  salvaLocale();
-  renderCommandes();
-  renderOggi();
-  if(o.rowIndex){
-    gasPost({action:"confirmer_commande",rowIndex:o.rowIndex}).then(function(res){
-      if(res && res.ok){ toast("✅ Commande confirmée"); }
-      else { toast("✅ Local OK — sync Sheets erreur",true); }
-    }).catch(function(){ toast("✅ Local OK — sync Sheets erreur",true); });
-  } else {
-    toast("✅ Commande confirmée");
-  }
+  salvaLocale(); renderCommandes(); renderOggi();
+  gasPost({action:"confirmer_commande", cmdId:o.cmdId, rowIndex:o.rowIndex}).then(function(res){
+    toast(res&&res.ok?"✅ Commande confirmée":"✅ Local OK — sync erreur",!(res&&res.ok));
+  }).catch(function(){ toast("✅ Local OK — sync erreur",true); });
 }
 function marcaRitirata(id){
   var o=sCommandes.find(function(x){return x.id===id;});
   if(!o) return;
   o.stato="ritirato";
-  salvaLocale();
-  renderCommandes();
-  renderOggi();
-  if(o.rowIndex){
-    gasPost({action:"marquer_retrait",rowIndex:o.rowIndex}).then(function(res){
-      if(res && res.ok){ toast("📦 Commande retirée"); }
-      else { toast("⚠️ Local OK — sync Sheets erreur",true); }
-    }).catch(function(){ toast("⚠️ Local OK — sync Sheets erreur",true); });
-  } else {
-    toast("📦 Commande retirée");
-  }
+  salvaLocale(); renderCommandes(); renderOggi();
+  gasPost({action:"marquer_retrait", cmdId:o.cmdId, rowIndex:o.rowIndex}).then(function(res){
+    toast(res&&res.ok?"📦 Commande retirée":"⚠️ Local OK — sync erreur",!(res&&res.ok));
+  }).catch(function(){ toast("⚠️ Local OK — sync erreur",true); });
 }
 
 function renderOggi(){
@@ -2988,10 +2969,11 @@ function loadCommandesReelles(){
       return s.split("T")[0];
     }
     sCommandes = res.commandes
-      .filter(function(c){ return c.statut!=="SUPPRIME"; }) // escludi eliminati
+      .filter(function(c){ return c.statut!=="supprime"; })
       .map(function(c){
         return {
-          id:        c.id || ("CMD-" + Date.now() + Math.random()),
+          id:        c.id,
+          cmdId:     c.id,
           rowIndex:  c.rowIndex || 0,
           nom:       c.client || "",
           tel:       c.tel || "",
@@ -2999,7 +2981,7 @@ function loadCommandesReelles(){
           heure:     c.heure || "",
           prodotti:  [{nome: c.produits||"", qty:1}],
           note:      c.note || "",
-          stato:     STATUT_MAP[c.statut] || "attesa",
+          stato:     c.statut || "attesa",
           demandeur: c.demandeur || "",
           creato:    c.creato || ""
         };
