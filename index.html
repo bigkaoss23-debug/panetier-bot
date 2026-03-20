@@ -488,8 +488,7 @@
         <div id="c-alert-achats-list" style="font-size:12px;color:var(--gris)"></div>
       </div>
       <div class="filtri">
-        <div class="filtro active" onclick="filtraAchats('tutti')"    id="ca-tutti">Tous</div>
-        <div class="filtro"        onclick="filtraAchats('attesa')"   id="ca-attesa">⏳ Attente</div>
+        <div class="filtro active" onclick="filtraAchats('attesa')"   id="ca-attesa">⏳ Attente</div>
         <div class="filtro"        onclick="filtraAchats('ricevuto')" id="ca-ricevuto">✅ Reçus</div>
         <div class="filtro"        onclick="filtraAchats('pendente')" id="ca-pendente">⚠️ Pendants</div>
         <div class="filtro"        onclick="filtraAchats('telegram')" id="ca-telegram">✈️ Telegram</div>
@@ -617,10 +616,10 @@
       </div>
       <div class="section-sub">Toutes les commandes</div>
       <div class="filtri">
-        <div class="filtro active" onclick="filtraSala('tutti')"    id="sf-tutti">Tous</div>
-        <div class="filtro"        onclick="filtraSala('attesa')"   id="sf-attesa">⏳ En attente</div>
-        <div class="filtro"        onclick="filtraSala('pronto')"   id="sf-pronto">✅ Prêts</div>
-        <div class="filtro"        onclick="filtraSala('ritirato')" id="sf-ritirato">📦 Retirés</div>
+        <div class="filtro active" onclick="filtraSala('attesa')"    id="sf-attesa">⏳ En attente</div>
+        <div class="filtro"        onclick="filtraSala('pronto')"    id="sf-pronto">✅ Prêts</div>
+        <div class="filtro"        onclick="filtraSala('ritirato')"  id="sf-ritirato">📦 Retirés</div>
+        <div class="filtro"        onclick="filtraSala('historique')" id="sf-historique">🗂 Historique</div>
       </div>
       <div id="s-lista-commandes"></div>
     </div>
@@ -779,30 +778,20 @@
   <div class="sheet-options">
     <div class="sheet-opt" data-mode="kg" onclick="selectUnitMode('kg')">
       <div class="sheet-opt-icon">⚖️</div>
-      <div class="sheet-opt-info">
-        <div class="sheet-opt-label">KG — Kilogrammes</div>
-        <div class="sheet-opt-desc">Incremento di 1 KG per tap</div>
-      </div>
+      <div class="sheet-opt-info"><div class="sheet-opt-label">KG — Kilogrammes</div></div>
       <span class="sheet-opt-check">✓</span>
     </div>
     <div class="sheet-opt" data-mode="g" onclick="selectUnitMode('g')">
       <div class="sheet-opt-icon">🔬</div>
-      <div class="sheet-opt-info">
-        <div class="sheet-opt-label">G — Grammes</div>
-        <div class="sheet-opt-desc">Incremento di 50g per tap</div>
-      </div>
+      <div class="sheet-opt-info"><div class="sheet-opt-label">G — Grammes</div></div>
       <span class="sheet-opt-check">✓</span>
     </div>
     <div class="sheet-opt" data-mode="pce" onclick="selectUnitMode('pce')">
       <div class="sheet-opt-icon">📦</div>
-      <div class="sheet-opt-info">
-        <div class="sheet-opt-label">PCE — Pièces</div>
-        <div class="sheet-opt-desc">Barchette, pezzi, confezioni</div>
-      </div>
+      <div class="sheet-opt-info"><div class="sheet-opt-label">PCE — Pièces</div></div>
       <span class="sheet-opt-check">✓</span>
     </div>
   </div>
-  <div class="sheet-memory">💾 La tua scelta viene ricordata per questo prodotto</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -926,30 +915,6 @@ var CATALOGUE = [
   {nome:"Filet de poulet cuit braisé SRV",forn:"Volailles Importation",prix:398.60,unite:"KG",prix_unite:18.00,date:"10.03.2026"}
 ];
 
-var ORDINI_DEMO = [
-  {forn:"Léguriviera",emoji:"🥬",data:"2026-03-04",montant:187.50},{forn:"Léguriviera",emoji:"🥬",data:"2026-03-06",montant:203.20},
-  {forn:"Léguriviera",emoji:"🥬",data:"2026-03-08",montant:165.80},{forn:"Léguriviera",emoji:"🥬",data:"2026-03-10",montant:194.30},
-  {forn:"TRANSGOURMET",emoji:"🏭",data:"2026-03-03",montant:542.60},{forn:"TRANSGOURMET",emoji:"🏭",data:"2026-03-07",montant:618.40},
-  {forn:"TRANSGOURMET",emoji:"🏭",data:"2026-03-10",montant:487.20},{forn:"DelMaitre Grand Charcutier",emoji:"🥩",data:"2026-03-05",montant:320.70},
-  {forn:"DelMaitre Grand Charcutier",emoji:"🥩",data:"2026-03-09",montant:298.40},{forn:"Fromages Chaudron SA",emoji:"🧀",data:"2026-03-04",montant:892.30},
-  {forn:"Fromages Chaudron SA",emoji:"🧀",data:"2026-03-08",montant:756.80},{forn:"Maître Boucher",emoji:"🔪",data:"2026-03-06",montant:156.40},
-  {forn:"Maître Boucher",emoji:"🔪",data:"2026-03-10",montant:178.20},{forn:"Transgourmet Suisse SA",emoji:"🏪",data:"2026-03-05",montant:843.20},
-  {forn:"VOLAILLES IMPORTATION SA",emoji:"🐔",data:"2026-03-07",montant:398.60}
-];
-
-var FATTURE_DEMO = [
-  {id:"FAT-001",forn:"Léguriviera",emoji:"🥬",data:"2026-03-10",montant:194.30,stato:"ok",ordine_id:"ORD-042",diff:null},
-  {id:"FAT-002",forn:"TRANSGOURMET",emoji:"🏭",data:"2026-03-10",montant:512.80,stato:"warning",ordine_id:"ORD-041",diff:"Montant facture CHF 512.80 vs ordre CHF 487.20 (Δ +25.60)"},
-  {id:"FAT-003",forn:"Fromages Chaudron SA",emoji:"🧀",data:"2026-03-08",montant:756.80,stato:"ok",ordine_id:"ORD-039",diff:null},
-  {id:"FAT-004",forn:"DelMaitre Grand Charcutier",emoji:"🥩",data:"2026-03-09",montant:298.40,stato:"ok",ordine_id:"ORD-040",diff:null},
-  {id:"FAT-005",forn:"Maître Boucher",emoji:"🔪",data:"2026-03-06",montant:171.00,stato:"warning",ordine_id:"ORD-037",diff:"Produit manquant: B-Entrecôte parisienne (commandé: 2, reçu: 1)"},
-  {id:"FAT-006",forn:"Transgourmet Suisse SA",emoji:"🏪",data:"2026-03-05",montant:843.20,stato:"ok",ordine_id:"ORD-036",diff:null},
-  {id:"FAT-007",forn:"VOLAILLES IMPORTATION SA",emoji:"🐔",data:"2026-03-07",montant:398.60,stato:"ok",ordine_id:"ORD-038",diff:null},
-  {id:"FAT-008",forn:"Léguriviera",emoji:"🥬",data:"2026-03-08",montant:165.80,stato:"ok",ordine_id:"ORD-035",diff:null},
-  {id:"FAT-009",forn:"TRANSGOURMET",emoji:"🏭",data:"2026-03-07",montant:618.40,stato:"ok",ordine_id:"ORD-034",diff:null},
-  {id:"FAT-010",forn:"Fromages Chaudron SA",emoji:"🧀",data:"2026-03-04",montant:892.30,stato:"warning",ordine_id:"ORD-031",diff:"3 produits non reconnus par OCR — vérification manuelle requise"}
-];
-
 // ── Normalizzazione fornitori ──────────────────────────────
 function normForn(n) {
   if (!n) return n;
@@ -1023,13 +988,13 @@ var RUOLI = {
 var cQuantita = [];
 var cUnitMode = {}; // { "fi-pi": "kg" | "g" } — default kg
 var cOrdini   = [];
-var cFiltroAchats = "tutti";
+var cFiltroAchats = "attesa";
 var cOrdiniInviati = []; // ordini confermati pronti per l'invio
 var catFiltro = {c:"tutti", m:"tutti"};
 
 // Sala state
 var sCommandes = [];
-var sFiltro = "tutti";
+var sFiltro = "attesa";
 
 // Manager state
 var mPeriodo = "week";
@@ -1438,27 +1403,21 @@ var cAchatsDetQty  = {};   // qty modificate {idx: newQty}
 function filtraAchats(f){
   cFiltroAchats=f;
   document.querySelectorAll("[id^='ca-']").forEach(function(el){el.classList.remove("active");});
-  document.getElementById("ca-"+f).classList.add("active");
+  var el=document.getElementById("ca-"+f);
+  if(el) el.classList.add("active");
   renderAchats();
 }
 
 function renderAchats(){
   var c=document.getElementById("c-lista-achats"); if(!c) return;
   var lista=Array.isArray(cOrdini)?cOrdini.slice():[];
-
-  // Escludi ordini già inviati (presenti in cOrdiniInviati per fornitore)
   var fornitoriInviati=cOrdiniInviati.map(function(o){return o.forn;});
 
-  if(cFiltroAchats==="tutti") {
-    // Tous: solo EN ATTENTE, escludi fornitori già inviati
-    lista=lista.filter(function(o){
-      return o.stato==="attesa" && fornitoriInviati.indexOf(o.forn)===-1;
-    });
-  } else if(cFiltroAchats==="attesa") {
-    // Attente: SOLO stato attesa, nessun ricevuto
+  if(cFiltroAchats==="attesa"){
     lista=lista.filter(function(o){return o.stato==="attesa";});
-  } else if(cFiltroAchats==="telegram") {
-    // Telegram: ordini da staff EN ATTENTE non ancora inviati
+  } else if(cFiltroAchats==="ricevuto"){
+    lista=lista.filter(function(o){return o.stato==="ricevuto";});
+  } else if(cFiltroAchats==="telegram"){
     lista=lista.filter(function(o){
       return o.source==="telegram" && o.stato==="attesa" && fornitoriInviati.indexOf(o.forn)===-1;
     });
@@ -1468,7 +1427,6 @@ function renderAchats(){
 
   if(lista.length===0){c.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>Aucun achat trouvé</div>';return;}
 
-  // Raggruppa per fornitore
   var perForn={};
   lista.forEach(function(o){
     var key=o.forn||"Inconnu";
@@ -1476,6 +1434,7 @@ function renderAchats(){
     perForn[key].ordini.push(o);
   });
 
+  var isRecus=cFiltroAchats==="ricevuto";
   c.innerHTML=Object.keys(perForn).map(function(forn){
     var g=perForn[forn];
     var nAttesa=g.ordini.filter(function(o){return o.stato==="attesa";}).length;
@@ -1483,11 +1442,19 @@ function renderAchats(){
     var badgeHtml='';
     if(nAttesa>0)   badgeHtml+='<span class="badge attesa"   style="font-size:11px;padding:2px 7px">⏳ '+nAttesa+'</span> ';
     if(nRicevuto>0) badgeHtml+='<span class="badge ricevuto" style="font-size:11px;padding:2px 7px">✅ '+nRicevuto+'</span>';
+    // Mostra note se tab Reçus
+    var noteHtml='';
+    if(isRecus){
+      var notes=g.ordini.filter(function(o){return o.note&&o.note.trim();}).map(function(o){return o.note.trim();});
+      var uniqueNotes=[...new Set(notes)];
+      if(uniqueNotes.length>0) noteHtml='<div style="color:var(--gris);font-size:11px;margin-top:4px">📝 '+uniqueNotes.join(' · ')+'</div>';
+    }
     return '<div class="forn-btn" onclick="achatsApriDettaglio(\''+forn.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+
       '<span style="font-size:24px">'+g.emoji+'</span>'+
       '<div class="forn-btn-info">'+
         '<div class="forn-btn-nome">'+forn+'</div>'+
         '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'+badgeHtml+'</div>'+
+        noteHtml+
       '</div>'+
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'+
         '<span style="color:var(--gris);font-size:11px">'+g.ordini.length+' art.</span>'+
@@ -1874,27 +1841,85 @@ function resetSala(){
 function filtraSala(f){
   sFiltro=f;
   document.querySelectorAll("[id^='sf-']").forEach(function(el){el.classList.remove("active");});
-  document.getElementById("sf-"+f).classList.add("active");
+  var el=document.getElementById("sf-"+f);
+  if(el) el.classList.add("active");
   renderCommandes();
+}
+
+function eliminaCommande(id){
+  if(!confirm("Supprimer cette commande ?")) return;
+  var idx=sCommandes.findIndex(function(x){return x.id===id;});
+  if(idx===-1) return;
+  var o=sCommandes[idx];
+  sCommandes.splice(idx,1);
+  salvaLocale();
+  renderCommandes();
+  renderOggi();
+  // Marca come ANNULE sul GAS se ha rowIndex
+  if(o.rowIndex){
+    gasPost({action:"annuler_ordre",rowIndex:o.rowIndex}).catch(function(){});
+  }
+  toast("🗑️ Commande supprimée");
 }
 
 function renderCommandes(){
   var c=document.getElementById("s-lista-commandes"); if(!c) return;
-  var ORDER={pronto:0,attesa:1,ritirato:2};
-  var lista=(sFiltro==="tutti"?sCommandes:sCommandes.filter(function(o){return o.stato===sFiltro;}))
-    .slice().sort(function(a,b){var oa=ORDER[a.stato]!=null?ORDER[a.stato]:1,ob=ORDER[b.stato]!=null?ORDER[b.stato]:1;if(oa!==ob)return oa-ob;return (a.heure||'')>(b.heure||'')?1:-1;});
+  var now=new Date();
+  var oggiISO=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+  function normDate(s){
+    if(!s) return "";
+    s=s.toString().trim();
+    var m=s.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+    if(m) return m[3]+"-"+m[2]+"-"+m[1];
+    return s.split("T")[0];
+  }
+
+  var lista;
+  if(sFiltro==="historique"){
+    // Storici: ritirato E data precedente a oggi
+    lista=sCommandes.filter(function(o){
+      return o.stato==="ritirato" && normDate(o.date)<oggiISO;
+    }).sort(function(a,b){return normDate(b.date)>normDate(a.date)?1:-1;});
+  } else if(sFiltro==="ritirato"){
+    // Ritirati di oggi
+    lista=sCommandes.filter(function(o){
+      return o.stato==="ritirato" && normDate(o.date)===oggiISO;
+    }).sort(function(a,b){return (a.heure||"")>(b.heure||"")?1:-1;});
+  } else if(sFiltro==="attesa"){
+    lista=sCommandes.filter(function(o){return o.stato==="attesa";})
+      .sort(function(a,b){return normDate(a.date)>normDate(b.date)?1:normDate(a.date)<normDate(b.date)?-1:(a.heure||"")>(b.heure||"")?1:-1;});
+  } else if(sFiltro==="pronto"){
+    lista=sCommandes.filter(function(o){return o.stato==="pronto";})
+      .sort(function(a,b){return (a.heure||"")>(b.heure||"")?1:-1;});
+  } else {
+    lista=sCommandes.slice();
+  }
+
   if(lista.length===0){c.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande</div>';return;}
+
   c.innerHTML=lista.map(function(o){
     var df=parseDateFR(o.date);
     var pt=o.prodotti.map(function(p){return p.qty+"× "+p.nome;}).join(", ");
-    var badgeMap={attesa:'<span class="badge attesa">⏳ En attente</span>',pronto:'<span class="badge ricevuto">✅ Prêt</span>',ritirato:'<span class="badge pendente">📦 Retiré</span>'};
-    var badge=badgeMap[o.stato]||'';
-    var btnConfirmer=o.stato==="attesa"?'<button class="btn-ritira" style="border-color:var(--vert);color:var(--vert)" onclick="confermaPronto(\''+o.id+'\')">✅ Confirmer</button>':'';
-    var btnRitira=o.stato==="pronto"?'<button class="btn-ritira" onclick="marcaRitirata(\''+o.id+'\')">📦 Retirée</button>':'';
-    var demandeurLine=o.demandeur?'<div style="color:var(--gris);font-size:11px;margin-bottom:4px">👤 '+o.demandeur+'</div>':'';
-    return '<div class="cmd-card"><div class="cmd-header"><div class="cmd-client">'+o.nom+'</div><div class="cmd-heure">🕐 '+o.heure+'</div></div><div class="cmd-prodotti">'+pt+'</div>'+demandeurLine+(o.note?'<div style="color:var(--gris);font-size:12px;margin-bottom:6px">📝 '+o.note+'</div>':"")+
-    '<div class="cmd-footer"><div class="cmd-tel">'+(o.tel?"📱 "+o.tel:"")+'&nbsp;📅 '+df+'</div>'+
-    '<div style="display:flex;align-items:center;gap:8px">'+badge+btnConfirmer+btnRitira+'</div></div></div>';
+    var badgeMap={
+      attesa:'<span class="badge attesa">⏳ En attente</span>',
+      pronto:'<span class="badge ricevuto">✅ Prêt</span>',
+      ritirato:'<span class="badge pendente">📦 Retiré</span>'
+    };
+    var badge=badgeMap[o.stato]||"";
+    var btnConfirmer=o.stato==="attesa"?'<button class="btn-ritira" style="border-color:var(--vert);color:var(--vert)" onclick="confermaPronto(\''+o.id+'\')">✅ Confirmer</button>':"";
+    var btnRitira=o.stato==="pronto"?'<button class="btn-ritira" onclick="marcaRitirata(\''+o.id+'\')">📦 Retirée</button>':"";
+    var btnDelete='<button onclick="eliminaCommande(\''+o.id+'\')" style="background:transparent;border:none;color:var(--rouge);font-size:16px;cursor:pointer;padding:2px 6px" title="Supprimer">🗑️</button>';
+    var demandeurLine=o.demandeur?'<div style="color:var(--gris);font-size:11px;margin-bottom:4px">👤 '+o.demandeur+'</div>':"";
+    return '<div class="cmd-card">'+
+      '<div class="cmd-header"><div class="cmd-client">'+o.nom+'</div><div style="display:flex;align-items:center;gap:4px"><div class="cmd-heure">🕐 '+o.heure+'</div>'+btnDelete+'</div></div>'+
+      '<div class="cmd-prodotti">'+pt+'</div>'+
+      demandeurLine+
+      (o.note?'<div style="color:var(--gris);font-size:12px;margin-bottom:6px">📝 '+o.note+'</div>':"")+ 
+      '<div class="cmd-footer">'+
+        '<div class="cmd-tel">'+(o.tel?"📱 "+o.tel+" ":"")+'📅 '+df+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+badge+btnConfirmer+btnRitira+'</div>'+
+      '</div>'+
+    '</div>';
   }).join("");
 }
 
@@ -2560,7 +2585,7 @@ function _loadCopertiMiniChart(){}
 
 // ═══════════════════════════════════════════════════
 function renderFornManager(){
-  var source=cOrdini.length>0?cOrdini:ORDINI_DEMO;
+  var source=cOrdini.length>0?cOrdini:[];
   var perForn={};
   source.forEach(function(o){
     if(!perForn[o.forn]) perForn[o.forn]={emoji:o.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0};
@@ -3083,8 +3108,20 @@ function salvaLocale(){
   }catch(e){ console.log("save skip:",e); }
 }
 function caricoLocale(){
+  // Pulisce dati demo vecchi se presenti
+  try{
+    var co=localStorage.getItem("panetier_commandes");
+    if(co){
+      var parsed=JSON.parse(co);
+      // Se contiene nomi test come "Mme Agger" o "Marie Dupont" svuota
+      if(Array.isArray(parsed)&&parsed.some(function(c){return ["Mme Agger","Marie Dupont","Client non identifié","Marson"].indexOf(c.nom)!==-1;})){
+        localStorage.removeItem("panetier_commandes");
+        parsed=[];
+      }
+      if(Array.isArray(parsed)) sCommandes=parsed;
+    }
+  }catch(e){}
   try{var o=localStorage.getItem("panetier_ordini");if(o){var p=JSON.parse(o);if(Array.isArray(p)) cOrdini=p;}}catch(e){}
-  try{var s=localStorage.getItem("panetier_commandes");if(s){var p=JSON.parse(s);if(Array.isArray(p)) sCommandes=p;}}catch(e){}
   _caricoEnvoyes();
 }
 function toast(msg,err){
