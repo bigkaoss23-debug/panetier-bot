@@ -2609,6 +2609,28 @@ function renderFornManager(){
     if(o.stato==="ricevuto"){perForn[fn].tot+=(o.montant||0);perForn[fn].ricevuto++;}
     if(o.stato==="attesa") perForn[fn].attesa++;
   });
+  // Calcola totale stimato per fornitore (ordini attesa+inviato × prix_unite catalogo)
+  var totaleStimato={};
+  FORNITORI.forEach(function(f){ totaleStimato[normForn(f.nome)]=0; });
+  source.filter(function(o){ return o.stato==="attesa"||o.stato==="inviato"; }).forEach(function(o){
+    var fn=normForn(o.forn);
+    var prod=o.prodotti[0]||{};
+    var qtyStr=(prod.qty||"").toString().trim();
+    var qtyNum=parseFloat(qtyStr.replace(/[^0-9.,]/g,"").replace(",",".")) || 0;
+    // Cerca prezzo nel CATALOGUE per questo fornitore
+    var cat=(topPrezzi[fn]||[]);
+    // Cerca in tutto CATALOGUE per match nome
+    var match=null;
+    var nomeProd=(prod.nome||"").toLowerCase().trim();
+    CATALOGUE.forEach(function(c){
+      if(normForn(c.forn)===fn && !match){
+        var cn=c.nome.toLowerCase().trim();
+        if(cn===nomeProd || cn.includes(nomeProd) || nomeProd.includes(cn)) match=c;
+      }
+    });
+    if(match && qtyNum>0) totaleStimato[fn]=(totaleStimato[fn]||0)+(qtyNum*match.prix_unite);
+  });
+
   var topPrezzi={};
   CATALOGUE.forEach(function(p){
     var fn=normForn(p.forn);
@@ -2630,8 +2652,8 @@ function renderFornManager(){
           '<div class="forn-card-meta">'+g.n+' ordre'+(g.n>1?"s":"")+(g.attesa>0?' · <span style="color:#e8b84b">'+g.attesa+' en attente</span>':'')+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+
-          '<div class="forn-card-chf">'+(g.tot>0?"CHF "+g.tot.toFixed(0):"—")+'</div>'+
-          '<div style="font-size:10px;color:var(--gris)">'+g.ricevuto+' reçu'+(g.ricevuto!==1?"s":"")+'</div>'+
+          '<div class="forn-card-chf">'+(totaleStimato[f]>0?'~CHF '+totaleStimato[f].toFixed(0):(g.tot>0?'CHF '+g.tot.toFixed(0):'—'))+'</div>'+
+          '<div style="font-size:10px;color:var(--gris)">'+g.ricevuto+' reçu'+(g.ricevuto!==1?'s':'')+'</div>'+
         '</div>'+
       '</div>'+
       (top.length>0?'<div class="prix-evol"><div class="prix-evol-title">Top prix unitaires</div>'+top.map(function(p){return '<div class="prix-mini-row"><span class="prix-mini-nome">'+p.nome+'</span><span class="prix-mini-val">CHF '+p.prix_unite.toFixed(2)+' / '+extractUB(p.unite)+'</span></div>';}).join("")+'</div>':"")+
