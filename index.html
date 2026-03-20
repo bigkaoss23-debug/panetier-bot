@@ -1414,7 +1414,8 @@ function renderAchats(){
   var fornitoriInviati=cOrdiniInviati.map(function(o){return o.forn;});
 
   if(cFiltroAchats==="attesa"){
-    lista=lista.filter(function(o){return o.stato==="attesa";});
+    // Attente: EN ATTENTE e NON ancora inviati al fornitore
+    lista=lista.filter(function(o){return o.stato==="attesa" && !o.inviato;});
   } else if(cFiltroAchats==="ricevuto"){
     lista=lista.filter(function(o){return o.stato==="ricevuto";});
   } else if(cFiltroAchats==="telegram"){
@@ -1534,49 +1535,48 @@ function achatsConferma(){
   if(!lista.length) return;
   var em=lista[0].emoji||"🏪";
 
-  // Costruisci lista ingredienti con qty aggiornate
   var ingredienti=lista.map(function(o,idx){
     var p=o.prodotti&&o.prodotti[0]?o.prodotti[0]:{};
     var qty=cAchatsDetQty[idx]!==undefined?cAchatsDetQty[idx]:(p.qty||"");
     return {nome:p.nome||"", qty:qty, unite:p.unite||""};
   }).filter(function(i){return i.nome;});
 
-  // Genera testi
   var oggi=new Date().toLocaleDateString("fr-CH",{weekday:"long",day:"numeric",month:"long"});
-
-  // Testo 1 — Lista semplice per email
-  var listaEmail=ingredienti.map(function(i){return "- "+i.qty+" "+i.unite+" "+i.nome;}).join("\n");
-  var texteSimple=
-    "Commande Le Panetier Sion — "+oggi+"\n"+
-    forn+"\n\n"+
-    listaEmail;
-
-  // Testo 2 — Messaggio WhatsApp con formattazione nativa (*grassetto*)
   var dateStr=new Date().toLocaleDateString("fr-CH",{day:"numeric",month:"long"});
-  var texteFormel=
-    "🥐 *Le Panetier Sion* — Commande du "+dateStr+"\n\n"+
-    "Bonjour,\n\n"+
-    "Voici notre commande pour livraison dès que possible :\n\n"+
+  var listaEmail=ingredienti.map(function(i){return "- "+i.qty+" "+i.unite+" "+i.nome;}).join("\n");
+  var texteSimple="Commande Le Panetier Sion — "+oggi+"\n"+forn+"\n\n"+listaEmail;
+  var texteFormel="🥐 *Le Panetier Sion* — Commande du "+dateStr+"\n\nBonjour,\n\nVoici notre commande pour livraison dès que possible :\n\n"+
     ingredienti.map(function(i){return "• "+i.qty+" "+i.unite+" — "+i.nome;}).join("\n")+
-    "\n\nMerci et bonne journée ! 🙏\n"+
-    "*Le Panetier Sion*";
+    "\n\nMerci et bonne journée ! 🙏\n*Le Panetier Sion*";
 
-  // Salva in ordini inviati (locale + localStorage)
-  cOrdiniInviati.unshift({
-    forn:forn, em:em,
-    date: new Date().toLocaleDateString("fr-CH",{day:"numeric",month:"short"}),
-    ingredienti:ingredienti,
-    texteSimple:texteSimple,
-    texteFormel:texteFormel,
-    rowIndex: lista.length>0?(lista[0].rowIndex||0):0,
-    rowIndexList: lista.map(function(o){return o.rowIndex||0;}).filter(Boolean),
-    inviato: new Date().toISOString()
+  var rowIndexList=lista.map(function(o){return o.rowIndex||0;}).filter(Boolean);
+
+  toast("⏳ Envoi en cours...");
+
+  // Marca come INVIATO sul GAS — tutti i dispositivi vedranno lo stesso stato
+  gasPost({action:"marquer_inviato", rowIndexList:rowIndexList}).then(function(res){
+    if(res && res.ok){
+      // Aggiorna localmente
+      lista.forEach(function(o){ o.inviato=true; });
+      cOrdiniInviati.unshift({
+        forn:forn, em:em,
+        date: new Date().toLocaleDateString("fr-CH",{day:"numeric",month:"short"}),
+        ingredienti:ingredienti,
+        texteSimple:texteSimple,
+        texteFormel:texteFormel,
+        rowIndex: rowIndexList[0]||0,
+        rowIndexList: rowIndexList,
+        inviato: new Date().toISOString()
+      });
+      _salvaEnvoyes();
+      cucinaTab("envoyes");
+      toast("✅ Ordre envoyé !");
+    } else {
+      toast("Erreur envoi GAS",true);
+    }
+  }).catch(function(){
+    toast("Erreur réseau",true);
   });
-  _salvaEnvoyes();
-
-  // Vai al tab Envoyés e mostra
-  cucinaTab("envoyes");
-  toast("✅ Ordre prêt à envoyer !");
 }
 
 // ═══════════════════════════════════════════════════
@@ -1591,26 +1591,50 @@ function _caricoEnvoyes(){
 
 function renderEnvoyes(){
   var c=document.getElementById("c-forn-btn-list"); if(!c) return;
-  // Sincronizza con GAS — rimuove ordini REÇU o ANNULE dal localStorage
+  c.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>';
+  // Sempre legge dal GAS per essere cross-device
   gasGet("get_achats").then(function(res){
-    if(!res.ok||!res.achats) return;
+    if(!res.ok||!res.achats){ _renderEnvoyesList(); return; }
+    var STATUT_MAP={"En attente":"attesa","REÇU":"ricevuto","Reçu":"ricevuto","ANNULE":"annule"};
+    // Rimuovi da cOrdiniInviati quelli già REÇU o ANNULE
     var recuSet={};
     res.achats.forEach(function(a){
       var s=(a.statut||"").toUpperCase();
       if(s==="REÇU"||s==="RECU"||s==="ANNULE") recuSet[a.rowIndex]=true;
     });
-    var prima=cOrdiniInviati.length;
     cOrdiniInviati=cOrdiniInviati.filter(function(o){
       var idxList=o.rowIndexList&&o.rowIndexList.length?o.rowIndexList:(o.rowIndex?[o.rowIndex]:[]);
       if(!idxList.length) return true;
       return !idxList.every(function(idx){return !!recuSet[idx];});
     });
-    if(cOrdiniInviati.length<prima){
-      _salvaEnvoyes();
-      _renderEnvoyesList();
-    }
-  }).catch(function(){});
-  _renderEnvoyesList();
+    // Aggiungi dal GAS gli INVIATO non ancora in lista
+    var inviatoAchats=res.achats.filter(function(a){
+      return (a.statut||"").toUpperCase()==="INVIATO" && a.forn && a.produit;
+    });
+    var fornInGAS={};
+    inviatoAchats.forEach(function(a){
+      var fn=normForn(a.forn)||a.forn;
+      if(!fornInGAS[fn]) fornInGAS[fn]={emoji:FORN_EMOJI[fn]||"🏪",ingredienti:[],rowIndexList:[]};
+      fornInGAS[fn].ingredienti.push({nome:a.produit||"",qty:a.qty||"",unite:a.unite||""});
+      if(a.rowIndex) fornInGAS[fn].rowIndexList.push(a.rowIndex);
+    });
+    Object.keys(fornInGAS).forEach(function(forn){
+      var exists=cOrdiniInviati.some(function(e){return e.forn===forn;});
+      if(!exists){
+        var d=fornInGAS[forn];
+        var listaEmail=d.ingredienti.map(function(i){return "- "+i.qty+" "+i.unite+" "+i.nome;}).join("\n");
+        var dateStr=new Date().toLocaleDateString("fr-CH",{day:"numeric",month:"short"});
+        cOrdiniInviati.unshift({
+          forn:forn,em:d.emoji,date:dateStr,ingredienti:d.ingredienti,
+          texteSimple:"Commande Le Panetier Sion\n"+forn+"\n\n"+listaEmail,
+          texteFormel:"🥐 *Le Panetier Sion*\n\n"+d.ingredienti.map(function(i){return "• "+i.qty+" "+i.unite+" — "+i.nome;}).join("\n"),
+          rowIndex:d.rowIndexList[0]||0,rowIndexList:d.rowIndexList,inviato:new Date().toISOString()
+        });
+      }
+    });
+    _salvaEnvoyes();
+    _renderEnvoyesList();
+  }).catch(function(){ _renderEnvoyesList(); });
 }
 function _renderEnvoyesList(){
   var c=document.getElementById("c-forn-btn-list"); if(!c) return;
@@ -1855,9 +1879,9 @@ function eliminaCommande(id){
   salvaLocale();
   renderCommandes();
   renderOggi();
-  // Marca come ANNULE sul GAS se ha rowIndex
-  if(o.rowIndex){
-    gasPost({action:"annuler_ordre",rowIndex:o.rowIndex}).catch(function(){});
+  // Elimina anche sul GAS se ha rowIndex
+  if(o.rowIndex&&o.rowIndex>0){
+    gasPost({action:"supprimer_commande",rowIndex:o.rowIndex}).catch(function(){});
   }
   toast("🗑️ Commande supprimée");
 }
@@ -2884,21 +2908,59 @@ function loadAchatsReels(){
   if(el) el.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>';
   gasGet("get_achats").then(function(res){
     if(!res.ok || !res.achats) return;
-    var STATUT_MAP = {"En attente":"attesa","REÇU":"ricevuto","Reçu":"ricevuto","En cours":"pendente"};
-    cOrdini = res.achats.map(function(a){
-      return {
-        id: a.id || Date.now(),
-        forn: a.forn || "",
-        emoji: FORN_EMOJI[a.forn] || "🏪",
-        data: a.date ? a.date.toString().split(" ")[0] : "",
-        note: a.note || "",
-        prodotti: [{nome: a.produit||"", qty: a.qty||"", unite: a.unite||""}],
-        stato: STATUT_MAP[a.statut] || "attesa",
-        source: a.source === "app" ? "app" : "telegram"
-      };
-    });
+    var STATUT_MAP = {"En attente":"attesa","REÇU":"ricevuto","Reçu":"ricevuto","En cours":"pendente","ANNULE":"annule"};
+    cOrdini = res.achats
+      .filter(function(a){ return a.forn && a.produit; }) // elimina righe fantasma
+      .map(function(a){
+        return {
+          id: a.id || Date.now(),
+          rowIndex: a.rowIndex || 0,
+          forn: normForn(a.forn) || a.forn,
+          emoji: FORN_EMOJI[normForn(a.forn)] || FORN_EMOJI[a.forn] || "🏪",
+          data: a.date ? a.date.toString().split(" ")[0] : "",
+          note: a.note || "",
+          prodotti: [{nome: a.produit||"", qty: a.qty||"", unite: a.unite||""}],
+          stato: STATUT_MAP[a.statut] || "attesa",
+          inviato: (a.statut||"").toUpperCase() === "INVIATO",
+          source: a.source === "app" ? "app" : "telegram"
+        };
+      })
+      .filter(function(o){ return o.stato !== "annule"; }); // nascondi ANNULE
     renderAchats();
+    // Ricostruisci cOrdiniInviati dai dati GAS (cross-device)
+    _syncEnvoyesFromGAS();
   });
+}
+
+function _syncEnvoyesFromGAS(){
+  // Prende dal GAS gli ordini INVIATO e li mette in Envoyés se non già presenti
+  var inviatoList=cOrdini.filter(function(o){return o.inviato;});
+  var fornInviati={};
+  inviatoList.forEach(function(o){
+    if(!fornInviati[o.forn]) fornInviati[o.forn]={emoji:o.emoji,ingredienti:[],rowIndexList:[]};
+    fornInviati[o.forn].ingredienti.push({nome:o.prodotti[0].nome,qty:o.prodotti[0].qty,unite:o.prodotti[0].unite});
+    if(o.rowIndex) fornInviati[o.forn].rowIndexList.push(o.rowIndex);
+  });
+  // Aggiorna cOrdiniInviati con dati freschi dal GAS
+  Object.keys(fornInviati).forEach(function(forn){
+    var exists=cOrdiniInviati.some(function(e){return e.forn===forn;});
+    if(!exists){
+      var d=fornInviati[forn];
+      var listaEmail=d.ingredienti.map(function(i){return "- "+i.qty+" "+i.unite+" "+i.nome;}).join("\n");
+      var dateStr=new Date().toLocaleDateString("fr-CH",{day:"numeric",month:"short"});
+      cOrdiniInviati.unshift({
+        forn:forn, em:d.emoji,
+        date:dateStr,
+        ingredienti:d.ingredienti,
+        texteSimple:"Commande Le Panetier Sion\n"+forn+"\n\n"+listaEmail,
+        texteFormel:"🥐 *Le Panetier Sion*\n\n"+d.ingredienti.map(function(i){return "• "+i.qty+" "+i.unite+" — "+i.nome;}).join("\n"),
+        rowIndex:d.rowIndexList[0]||0,
+        rowIndexList:d.rowIndexList,
+        inviato:new Date().toISOString()
+      });
+    }
+  });
+  _salvaEnvoyes();
 }
 
 function loadCommandesReelles(){
@@ -2913,23 +2975,34 @@ function loadCommandesReelles(){
       "En attente": "attesa",
       "Acceptee":   "pronto",
       "Refusee":    "ritirato",
-      "RETIREE":    "ritirato"
+      "RETIREE":    "ritirato",
+      "SUPPRIME":   "supprime"
     };
-    sCommandes = res.commandes.map(function(c){
-      return {
-        id:        c.id || ("CMD-" + Date.now() + Math.random()),
-        rowIndex:  c.rowIndex || 0,
-        nom:       c.client || "",
-        tel:       c.tel || "",
-        date:      c.date || "",
-        heure:     c.heure || "",
-        prodotti:  [{nome: c.produits||"", qty:1}],
-        note:      c.note || "",
-        stato:     STATUT_MAP[c.statut] || "attesa",
-        demandeur: c.demandeur || "",
-        creato:    c.creato || ""
-      };
-    });
+    var oggiISO=(function(){var n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})();
+    function normDate(s){
+      if(!s) return "";
+      s=s.toString().trim();
+      var m=s.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+      if(m) return m[3]+"-"+m[2]+"-"+m[1];
+      return s.split("T")[0];
+    }
+    sCommandes = res.commandes
+      .filter(function(c){ return c.statut!=="SUPPRIME"; }) // escludi eliminati
+      .map(function(c){
+        return {
+          id:        c.id || ("CMD-" + Date.now() + Math.random()),
+          rowIndex:  c.rowIndex || 0,
+          nom:       c.client || "",
+          tel:       c.tel || "",
+          date:      c.date || "",
+          heure:     c.heure || "",
+          prodotti:  [{nome: c.produits||"", qty:1}],
+          note:      c.note || "",
+          stato:     STATUT_MAP[c.statut] || "attesa",
+          demandeur: c.demandeur || "",
+          creato:    c.creato || ""
+        };
+      });
     salvaLocale();
     renderCommandes();
     renderOggi();
