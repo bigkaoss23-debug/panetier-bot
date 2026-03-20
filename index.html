@@ -2609,17 +2609,24 @@ function renderFornManager(){
     if(o.stato==="ricevuto"){perForn[fn].tot+=(o.montant||0);perForn[fn].ricevuto++;}
     if(o.stato==="attesa") perForn[fn].attesa++;
   });
-  // Calcola totale stimato per fornitore (ordini attesa+inviato × prix_unite catalogo)
+  var topPrezzi={};
+  CATALOGUE.forEach(function(p){
+    var fn=normForn(p.forn);
+    if(!topPrezzi[fn])topPrezzi[fn]=[];
+    topPrezzi[fn].push(p);
+  });
+  Object.keys(topPrezzi).forEach(function(f){
+    topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});
+    topPrezzi[f]=topPrezzi[f].slice(0,3);
+  });
+
+  // Calcola totale stimato (dopo topPrezzi — ordini attesa+inviato × prix_unite)
   var totaleStimato={};
   FORNITORI.forEach(function(f){ totaleStimato[normForn(f.nome)]=0; });
   source.filter(function(o){ return o.stato==="attesa"||o.stato==="inviato"; }).forEach(function(o){
     var fn=normForn(o.forn);
     var prod=o.prodotti[0]||{};
-    var qtyStr=(prod.qty||"").toString().trim();
-    var qtyNum=parseFloat(qtyStr.replace(/[^0-9.,]/g,"").replace(",",".")) || 0;
-    // Cerca prezzo nel CATALOGUE per questo fornitore
-    var cat=(topPrezzi[fn]||[]);
-    // Cerca in tutto CATALOGUE per match nome
+    var qtyNum=parseFloat((prod.qty||"").toString().replace(/[^0-9.,]/g,"").replace(",",".")) || 0;
     var match=null;
     var nomeProd=(prod.nome||"").toLowerCase().trim();
     CATALOGUE.forEach(function(c){
@@ -2631,16 +2638,6 @@ function renderFornManager(){
     if(match && qtyNum>0) totaleStimato[fn]=(totaleStimato[fn]||0)+(qtyNum*match.prix_unite);
   });
 
-  var topPrezzi={};
-  CATALOGUE.forEach(function(p){
-    var fn=normForn(p.forn);
-    if(!topPrezzi[fn])topPrezzi[fn]=[];
-    topPrezzi[fn].push(p);
-  });
-  Object.keys(topPrezzi).forEach(function(f){
-    topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});
-    topPrezzi[f]=topPrezzi[f].slice(0,3);
-  });
   var sorted=Object.keys(perForn).sort(function(a,b){return perForn[b].tot-perForn[a].tot;});
   document.getElementById("m-forn-cards").innerHTML=sorted.map(function(f){
     var g=perForn[f], top=topPrezzi[f]||[];
