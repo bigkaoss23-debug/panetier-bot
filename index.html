@@ -1583,10 +1583,11 @@ function achatsConferma(){
 // CUCINA — ENVOYÉS (con persistenza localStorage)
 // ═══════════════════════════════════════════════════
 function _salvaEnvoyes(){
-  try{localStorage.setItem("panetier_envoyes",JSON.stringify(cOrdiniInviati.slice(0,30)));}catch(e){}
+  // Non salva più in localStorage — fonte unica = GAS (statuto INVIATO)
 }
 function _caricoEnvoyes(){
-  try{var s=localStorage.getItem("panetier_envoyes");if(s){var p=JSON.parse(s);if(Array.isArray(p)) cOrdiniInviati=p;}}catch(e){}
+  // Non carica più da localStorage — fonte unica = GAS (statuto INVIATO)
+  cOrdiniInviati = [];
 }
 
 function renderEnvoyes(){
@@ -3181,6 +3182,8 @@ function salvaLocale(){
   }catch(e){ console.log("save skip:",e); }
 }
 function caricoLocale(){
+  // Pulisce vecchio localStorage Envoyés — ora si legge solo dal GAS
+  try{ localStorage.removeItem("panetier_envoyes"); }catch(e){}
   // Pulisce dati demo vecchi se presenti
   try{
     var co=localStorage.getItem("panetier_commandes");
