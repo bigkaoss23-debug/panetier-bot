@@ -2619,6 +2619,7 @@ function renderFornManager(){
     topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});
     topPrezzi[f]=topPrezzi[f].slice(0,3);
   });
+  var sorted=Object.keys(perForn).sort(function(a,b){return perForn[b].tot-perForn[a].tot;});
   document.getElementById("m-forn-cards").innerHTML=sorted.map(function(f){
     var g=perForn[f], top=topPrezzi[f]||[];
     return '<div class="forn-card">'+
