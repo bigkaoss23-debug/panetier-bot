@@ -755,11 +755,10 @@
       <div class="section-title">Commandes clients</div>
       <div class="section-sub">Vue Manager</div>
       <div class="filtri" style="margin-bottom:12px">
-        <div class="filtro active" onclick="filtroMCmd('tutti')"   id="mcf-tutti">Toutes</div>
+        <div class="filtro active" onclick="filtroMCmd('attesa')"  id="mcf-attesa">⏳ Attente</div>
+        <div class="filtro"        onclick="filtroMCmd('pronto')"  id="mcf-pronto">✅ Prêtes</div>
         <div class="filtro"        onclick="filtroMCmd('oggi')"    id="mcf-oggi">Aujourd'hui</div>
         <div class="filtro"        onclick="filtroMCmd('domani')"  id="mcf-domani">Demain</div>
-        <div class="filtro"        onclick="filtroMCmd('pronto')"  id="mcf-pronto">✅ Prêtes</div>
-        <div class="filtro"        onclick="filtroMCmd('attesa')"  id="mcf-attesa">⏳ Attente</div>
       </div>
       <div id="m-cmd-summary"></div>
       <div id="m-cmd-lista"></div>
@@ -997,7 +996,7 @@ var sFiltro = "attesa";
 // Manager state
 var mPeriodo = "week";
 var mFiltroFat = "tutti";
-var mFiltroCommandes = "tutti";
+var mFiltroCommandes = "attesa";
 
 // ═══════════════════════════════════════════════════
 // INIT
@@ -1871,7 +1870,35 @@ function inviaCommande(){
   });
   if(prodotti.length===0){toast("Ajoutez au moins un produit",true);return;}
   toast("⏳ Envoi en cours...");
-  gasPost({action:"nouvelle_commande",client:nom,telephone:tel,date:date,heure:heure,produits:prodotti,note:document.getElementById("s-note").value.trim(),demandeur:"Salle"}).then(function(res){
+  var editId=document._editingCmdId||null;
+  document._editingCmdId=null;
+  var noteVal=document.getElementById("s-note").value.trim();
+
+  if(editId){
+    // MODIFICA — aggiorna localmente e sul GAS
+    var idx=sCommandes.findIndex(function(x){return x.id===editId;});
+    if(idx>=0){
+      var o=sCommandes[idx];
+      o.nom=nom; o.tel=tel; o.date=date; o.heure=heure;
+      o.prodotti=prodotti.map(function(p){return {nome:p.nome,qty:p.qty};});
+      o.note=noteVal;
+      salvaLocale();
+      // Aggiorna sul GAS (cmdId per trovare la riga)
+      if(o.cmdId||o.rowIndex){
+        gasPost({action:"modifier_commande",cmdId:o.cmdId||null,rowIndex:o.rowIndex||0,
+          client:nom,telephone:tel,date:date,heure:heure,
+          produits:prodotti,note:noteVal,demandeur:"Salle"
+        }).catch(function(){});
+      }
+      toast("✅ Commande modifiée !");
+    }
+    resetSala();
+    salaTab("commandes");
+    return;
+  }
+
+  // NOUVELLE COMMANDE
+  gasPost({action:"nouvelle_commande",client:nom,telephone:tel,date:date,heure:heure,produits:prodotti,note:noteVal,demandeur:"Salle"}).then(function(res){
     if(res && res.ok){
       toast("✅ Commande envoyée !");
       sCommandes.unshift({
@@ -1880,7 +1907,7 @@ function inviaCommande(){
         rowIndex: 0,
         nom: nom, tel: tel, date: date, heure: heure,
         prodotti: prodotti.map(function(p){return {nome:p.nome,qty:p.qty};}),
-        note: document.getElementById("s-note").value.trim(),
+        note: noteVal,
         stato: "pronto",
         demandeur: "Salle",
         creato: ""
@@ -1890,11 +1917,9 @@ function inviaCommande(){
       salaTab("commandes");
     } else {
       toast("Erreur envoi — réessayez",true);
-      console.error("inviaCommande res:", JSON.stringify(res));
     }
-  }).catch(function(err){
+  }).catch(function(){
     toast("Erreur réseau — réessayez",true);
-    console.error("inviaCommande err:", err);
   });
 }
 
@@ -1995,17 +2020,34 @@ function renderCommandes(){
 
 function modificaCommande(id){
   var o=sCommandes.find(function(x){return x.id===id;}); if(!o) return;
-  // Pre-compila il form nuova commanda con i dati esistenti
+
+  // Pre-compila campi base
   document.getElementById("s-nom").value=o.nom||"";
-  document.getElementById("s-prodotti").value=o.prodotti.map(function(p){return p.qty+"x "+p.nome;}).join(", ")||"";
   document.getElementById("s-date").value=o.date||"";
   document.getElementById("s-heure").value=o.heure||"";
   document.getElementById("s-tel").value=o.tel||"";
   document.getElementById("s-note").value=o.note||"";
-  // Salva id originale per sovrascrivere
+
+  // Pre-compila righe prodotti
+  var c=document.getElementById("s-prodotti-rows");
+  if(c){
+    c.innerHTML="";
+    (o.prodotti||[]).forEach(function(p){
+      var row=document.createElement("div"); row.className="prod-row";
+      row.innerHTML='<input class="prod-row-input" type="text" placeholder="Produit..." value="'+
+        (p.nome||"").replace(/"/g,"&quot;")+'"><input class="prod-row-qty" type="number" value="'+
+        (p.qty||1)+'" min="1"><span class="prod-row-del" onclick="this.parentElement.remove()">×</span>';
+      c.appendChild(row);
+    });
+    if((o.prodotti||[]).length===0) aggiungiProdottoSala();
+  }
+
+  // Segna id in modifica — inviaCommande lo usa per aggiornare invece di creare
   document._editingCmdId=id;
-  sTab("nouvelle");
-  toast("✏️ Modifiez et re-enregistrez");
+
+  // Vai al tab Nouvelle
+  salaTab("nouvelle");
+  toast("✏️ Modifiez et confirmez");
 }
 
 function cambiaStato(id,stato){
@@ -2109,7 +2151,7 @@ function managerLoadAll(){
   // Commandes
   gasGet("get_commandes").then(function(res){
     if(!res.ok||!res.commandes) return;
-    var SM={"En attente":"attesa","Acceptee":"pronto","Refusee":"ritirato","RETIREE":"ritirato","CONFIRMÉE":"pronto"};
+    var SM={"En attente":"attesa","EN ATTENTE":"attesa","Acceptee":"pronto","Refusee":"ritirato","RETIREE":"ritirato","SUPPRIME":"ritirato","CONFIRMÉE":"pronto","CONFIRMEE":"pronto","confirmee":"pronto","pronto":"pronto","attesa":"attesa","ritirato":"ritirato"};
     sCommandes=res.commandes.map(function(c){
       return {id:c.id||("CMD-"+Date.now()+Math.random()),rowIndex:c.rowIndex||0,nom:c.client||"",tel:c.tel||"",date:c.date||"",heure:c.heure||"",prodotti:[{nome:c.produits||"",qty:1}],note:c.note||"",stato:SM[c.statut]||"attesa",demandeur:c.demandeur||"",creato:c.creato||""};
     });
@@ -2854,8 +2896,11 @@ function renderManagerCoperti(){
 function filtroMCmd(f){
   mFiltroCommandes=f;
   document.querySelectorAll("[id^='mcf-']").forEach(function(el){el.classList.remove("active");});
-  document.getElementById("mcf-"+f).classList.add("active");
-  renderManagerCommandes();
+  var btn=document.getElementById("mcf-"+f);
+  if(btn) btn.classList.add("active");
+  // Se dati già caricati → render diretto, altrimenti reload GAS
+  if(sCommandes.length>0) _doRenderManagerCommandes();
+  else renderManagerCommandes();
 }
 
 function renderManagerCommandes(){
@@ -2863,16 +2908,27 @@ function renderManagerCommandes(){
   var sumEl=document.getElementById("m-cmd-summary");
   if(!el) return;
 
-  if(sCommandes.length===0){
-    el.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>';
-    gasGet("get_commandes").then(function(res){
-      if(!res.ok||!res.commandes){el.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande</div>';return;}
-      var SM={"En attente":"attesa","Acceptee":"pronto","Refusee":"ritirato","RETIREE":"ritirato","CONFIRMÉE":"pronto"};
-      sCommandes=res.commandes.map(function(c){return {id:c.id||("CMD-"+Date.now()+Math.random()),rowIndex:c.rowIndex||0,nom:c.client||"",tel:c.tel||"",date:c.date||"",heure:c.heure||"",prodotti:[{nome:c.produits||"",qty:1}],note:c.note||"",stato:SM[c.statut]||"attesa",demandeur:c.demandeur||"",creato:c.creato||""};});
-      renderManagerCommandes();
+  // Sempre ricarica dal GAS — dati freschi
+  el.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>';
+  if(sumEl) sumEl.innerHTML="";
+  var SM={"En attente":"attesa","EN ATTENTE":"attesa","Acceptee":"pronto","Refusee":"ritirato","RETIREE":"ritirato","SUPPRIME":"ritirato","CONFIRMÉE":"pronto","CONFIRMEE":"pronto"};
+  gasGet("get_commandes").then(function(res){
+    if(!res.ok||!res.commandes){el.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande</div>';return;}
+    sCommandes=res.commandes.map(function(c){
+      return {id:c.id||("CMD-"+Date.now()+Math.random()),cmdId:c.id||null,rowIndex:c.rowIndex||0,
+        nom:c.client||"",tel:c.tel||"",date:c.date||"",heure:c.heure||"",
+        prodotti:[{nome:c.produits||"",qty:1}],note:c.note||"",
+        stato:SM[c.statut]||"attesa",demandeur:c.demandeur||"",creato:c.creato||""};
     });
-    return;
-  }
+    _doRenderManagerCommandes();
+  }).catch(function(){el.innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span>Erreur réseau</div>';});
+  return;
+}
+
+function _doRenderManagerCommandes(){
+  var el=document.getElementById("m-cmd-lista");
+  var sumEl=document.getElementById("m-cmd-summary");
+  if(!el) return;
 
   // Normalizza data di oggi e domani in dd.MM.yyyy
   var now=new Date();
