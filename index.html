@@ -3100,8 +3100,9 @@ function loadCommandesReelles(){
       return s.split("T")[0];
     }
     sCommandes = res.commandes
-      .filter(function(c){ return c.statut!=="supprime"; })
+      .filter(function(c){ var s=(c.statut||"").toUpperCase(); return s!=="SUPPRIME"; })
       .map(function(c){
+        var dem=(c.demandeur||"").toString().trim();
         return {
           id:        c.id,
           cmdId:     c.id,
@@ -3112,8 +3113,8 @@ function loadCommandesReelles(){
           heure:     c.heure || "",
           prodotti:  [{nome: c.produits||"", qty:1}],
           note:      c.note || "",
-          stato:     c.statut || "attesa",
-          demandeur: c.demandeur || "",
+          stato:     _mapStatut(c.statut, dem),
+          demandeur: dem,
           creato:    c.creato || ""
         };
       });
