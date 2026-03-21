@@ -1155,7 +1155,6 @@ function managerTab(tab) {
   if(tab==="factures")   { renderFatture(); }
   if(tab==="coperti")    { renderManagerCoperti(); }
   if(tab==="commandes")  { renderManagerCommandes(); }
-  if(tab==="fournisseurs") { renderFornManager(); }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1183,10 +1182,10 @@ function generaFornitori() {
   }
   for(var fi=0;fi<FORNITORI.length;fi++){
     var f=FORNITORI[fi];
-    var item=document.createElement("div"); item.className="forn-item selezionato"; item.id="fi-"+fi;
-    item.innerHTML='<span class="forn-emoji">'+f.emoji+'</span><div class="forn-info"><div class="forn-nome">'+f.nome+'</div><div class="forn-meta">'+f.prodotti.length+' produits</div></div><span class="forn-arrow" style="transform:rotate(90deg)">›</span>';
+    var item=document.createElement("div"); item.className="forn-item"; item.id="fi-"+fi;
+    item.innerHTML='<span class="forn-emoji">'+f.emoji+'</span><div class="forn-info"><div class="forn-nome">'+f.nome+'</div><div class="forn-meta">'+f.prodotti.length+' produits</div></div><span class="forn-arrow" style="transform:rotate(0deg)">›</span>';
     (function(i){item.onclick=function(){toggleForn(i);};})(fi);
-    var panel=document.createElement("div"); panel.className="forn-panel aperto"; panel.id="fp-"+fi;
+    var panel=document.createElement("div"); panel.className="forn-panel"; panel.id="fp-"+fi;
     var h="";
     for(var pi=0;pi<f.prodotti.length;pi++){
       var p=f.prodotti[pi]; var cls=uniteClass(p.unite);
@@ -1505,6 +1504,7 @@ function achatsApriDettaglio(forn){
             '<span id="adet-qty-'+idx+'" style="min-width:36px;text-align:center;font-weight:700;font-size:14px;color:var(--or)">'+qtyNum+'</span>'+
             '<span style="color:var(--gris);font-size:11px">'+p.unite+'</span>'+
             '<button onclick="achatsQty('+idx+',1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card2);color:var(--beige);font-size:16px;cursor:pointer">+</button>'+
+            (o.stato==="attesa"?'<button onclick="eliminaOrdineAttesa(\''+o.id+'\','+o.rowIndex+',\''+forn+'\')" style="width:28px;height:28px;border-radius:50%;border:1px solid #e74c3c;background:transparent;color:#e74c3c;font-size:14px;cursor:pointer">🗑</button>':'')+
           '</div>'+
         '</div>'+
       '</div>';
@@ -1516,6 +1516,27 @@ function achatsApriDettaglio(forn){
     '</div>';
 
   el.innerHTML=html;
+}
+
+function eliminaOrdineAttesa(achatId, rowIndex, forn){
+  // Chiama GAS con ROW_ID prioritario
+  var payload = {action:"annuler_ordre"};
+  if(achatId && achatId.startsWith("ACH-")) payload.achatId = achatId;
+  else payload.rowIndex = rowIndex;
+  gasPost(payload).then(function(res){
+    if(res && res.ok){
+      // Rimuovi da cOrdini localmente
+      var idx = cOrdini.findIndex(function(o){ return o.id===achatId || o.rowIndex===rowIndex; });
+      if(idx>=0) cOrdini.splice(idx,1);
+      toast("🗑️ Ordre supprimé");
+      // Torna alla lista se nessun altro ordine per questo fornitore
+      var rimanenti = cOrdini.filter(function(o){ return o.forn===forn && o.stato==="attesa"; });
+      if(rimanenti.length === 0){ cAchatsDetForn=null; renderAchats(); }
+      else { achatsApriDettaglio(forn); }
+    } else {
+      toast("❌ Erreur suppression", true);
+    }
+  }).catch(function(){ toast("❌ Erreur réseau", true); });
 }
 
 var _aqLock = false;
@@ -2025,7 +2046,7 @@ function managerLoadAll(){
   // Achats per tab Cucina/Envoyés
   gasGet("get_achats").then(function(res){
     if(!res.ok||!res.achats) return;
-    var STATUT_MAP={"En attente":"attesa","REÇU":"ricevuto","Reçu":"ricevuto","En cours":"pendente"};
+    var STATUT_MAP={"En attente":"attesa","EN ATTENTE":"attesa","REÇU":"ricevuto","Reçu":"ricevuto","ENVOYÉ":"inviato","INVIATO":"inviato","En cours":"pendente"};
     cOrdini=res.achats.map(function(a){
       var fn=normForn(a.forn||"");
       return {
@@ -2594,50 +2615,15 @@ function _loadCopertiMiniChart(){}
 function renderFornManager(){
   var source=cOrdini.length>0?cOrdini:[];
   var perForn={};
-
-  // Prima inizializza tutti i fornitori dall'array hardcodato
-  FORNITORI.forEach(function(f){
-    var fn=normForn(f.nome);
-    perForn[fn]={emoji:f.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0,nomeOrig:f.nome};
-  });
-
-  // Poi aggiunge i dati reali dagli ordini
   source.forEach(function(o){
-    var fn=normForn(o.forn);
-    if(!perForn[fn]) perForn[fn]={emoji:o.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0,nomeOrig:o.forn};
-    perForn[fn].n++;
-    if(o.stato==="ricevuto"){perForn[fn].tot+=(o.montant||0);perForn[fn].ricevuto++;}
-    if(o.stato==="attesa") perForn[fn].attesa++;
+    if(!perForn[o.forn]) perForn[o.forn]={emoji:o.emoji||"🏪",tot:0,n:0,ricevuto:0,attesa:0};
+    perForn[o.forn].n++;
+    if(o.stato==="ricevuto"){perForn[o.forn].tot+=(o.montant||0);perForn[o.forn].ricevuto++;}
+    if(o.stato==="attesa") perForn[o.forn].attesa++;
   });
   var topPrezzi={};
-  CATALOGUE.forEach(function(p){
-    var fn=normForn(p.forn);
-    if(!topPrezzi[fn])topPrezzi[fn]=[];
-    topPrezzi[fn].push(p);
-  });
-  Object.keys(topPrezzi).forEach(function(f){
-    topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});
-    topPrezzi[f]=topPrezzi[f].slice(0,3);
-  });
-
-  // Calcola totale stimato (dopo topPrezzi — ordini attesa+inviato × prix_unite)
-  var totaleStimato={};
-  FORNITORI.forEach(function(f){ totaleStimato[normForn(f.nome)]=0; });
-  source.filter(function(o){ return o.stato==="attesa"||o.stato==="inviato"; }).forEach(function(o){
-    var fn=normForn(o.forn);
-    var prod=o.prodotti[0]||{};
-    var qtyNum=parseFloat((prod.qty||"").toString().replace(/[^0-9.,]/g,"").replace(",",".")) || 0;
-    var match=null;
-    var nomeProd=(prod.nome||"").toLowerCase().trim();
-    CATALOGUE.forEach(function(c){
-      if(normForn(c.forn)===fn && !match){
-        var cn=c.nome.toLowerCase().trim();
-        if(cn===nomeProd || cn.includes(nomeProd) || nomeProd.includes(cn)) match=c;
-      }
-    });
-    if(match && qtyNum>0) totaleStimato[fn]=(totaleStimato[fn]||0)+(qtyNum*match.prix_unite);
-  });
-
+  CATALOGUE.forEach(function(p){if(!topPrezzi[p.forn])topPrezzi[p.forn]=[];topPrezzi[p.forn].push(p);});
+  Object.keys(topPrezzi).forEach(function(f){topPrezzi[f].sort(function(a,b){return b.prix_unite-a.prix_unite;});topPrezzi[f]=topPrezzi[f].slice(0,3);});
   var sorted=Object.keys(perForn).sort(function(a,b){return perForn[b].tot-perForn[a].tot;});
   document.getElementById("m-forn-cards").innerHTML=sorted.map(function(f){
     var g=perForn[f], top=topPrezzi[f]||[];
@@ -2649,8 +2635,8 @@ function renderFornManager(){
           '<div class="forn-card-meta">'+g.n+' ordre'+(g.n>1?"s":"")+(g.attesa>0?' · <span style="color:#e8b84b">'+g.attesa+' en attente</span>':'')+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+
-          '<div class="forn-card-chf">'+(totaleStimato[f]>0?'~CHF '+totaleStimato[f].toFixed(0):(g.tot>0?'CHF '+g.tot.toFixed(0):'—'))+'</div>'+
-          '<div style="font-size:10px;color:var(--gris)">'+g.ricevuto+' reçu'+(g.ricevuto!==1?'s':'')+'</div>'+
+          '<div class="forn-card-chf">'+(g.tot>0?"CHF "+g.tot.toFixed(0):"—")+'</div>'+
+          '<div style="font-size:10px;color:var(--gris)">'+g.ricevuto+' reçu'+(g.ricevuto!==1?"s":"")+'</div>'+
         '</div>'+
       '</div>'+
       (top.length>0?'<div class="prix-evol"><div class="prix-evol-title">Top prix unitaires</div>'+top.map(function(p){return '<div class="prix-mini-row"><span class="prix-mini-nome">'+p.nome+'</span><span class="prix-mini-val">CHF '+p.prix_unite.toFixed(2)+' / '+extractUB(p.unite)+'</span></div>';}).join("")+'</div>':"")+
