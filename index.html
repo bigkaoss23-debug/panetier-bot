@@ -1450,15 +1450,18 @@ function renderAchats(){
       var uniqueNotes=[...new Set(notes)];
       if(uniqueNotes.length>0) noteHtml='<div style="color:var(--gris);font-size:11px;margin-top:4px">📝 '+uniqueNotes.join(' · ')+'</div>';
     }
-    return '<div class="forn-btn" onclick="achatsApriDettaglio(\''+forn.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">'+
+    var fornSafe=forn.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    var btnElimina=cFiltroAchats==="attesa"?
+      '<button onclick="event.stopPropagation();eliminaOrdiniFornitore(\''+fornSafe+'\');" style="background:transparent;border:1px solid #e74c3c;border-radius:8px;color:#e74c3c;font-size:14px;cursor:pointer;padding:4px 10px;margin-left:4px">🗑</button>':'';
+    return '<div class="forn-btn" onclick="achatsApriDettaglio(\''+fornSafe+'\')">'+
       '<span style="font-size:24px">'+g.emoji+'</span>'+
       '<div class="forn-btn-info">'+
         '<div class="forn-btn-nome">'+forn+'</div>'+
         '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'+badgeHtml+'</div>'+
         noteHtml+
       '</div>'+
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'+
-        '<span style="color:var(--gris);font-size:11px">'+g.ordini.length+' art.</span>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;align-items:center">'+
+        btnElimina+
         '<span style="color:var(--or);font-size:20px">›</span>'+
       '</div>'+
     '</div>';
@@ -1516,6 +1519,28 @@ function achatsApriDettaglio(forn){
     '</div>';
 
   el.innerHTML=html;
+}
+
+function eliminaOrdiniFornitore(forn){
+  // Elimina tutti gli ordini EN ATTENTE di questo fornitore
+  var lista = cOrdini.filter(function(o){ return o.forn===forn && o.stato==="attesa"; });
+  if(lista.length===0){ toast("Aucun ordre en attente"); return; }
+  var promises = lista.map(function(o){
+    var payload = {action:"annuler_ordre"};
+    if(o.id && o.id.startsWith("ACH-")) payload.achatId = o.id;
+    else if(o.rowIndex && o.rowIndex > 0) payload.rowIndex = o.rowIndex;
+    else return Promise.resolve({ok:true}); // niente da fare
+    return gasPost(payload);
+  });
+  Promise.all(promises).then(function(){
+    // Rimuovi localmente
+    lista.forEach(function(o){
+      var idx = cOrdini.indexOf(o);
+      if(idx>=0) cOrdini.splice(idx,1);
+    });
+    toast("🗑️ "+lista.length+" ordre(s) supprimé(s)");
+    renderAchats();
+  }).catch(function(){ toast("❌ Erreur réseau", true); });
 }
 
 function eliminaOrdineAttesa(achatId, rowIndex, forn){
@@ -1682,18 +1707,16 @@ function _renderEnvoyesList(){
 
 function annulerEnvoye(idx){
   var o=cOrdiniInviati[idx]; if(!o) return;
-  if(!confirm("Annuler l'ordre "+o.forn+" ?")) return;
-  // Chiama GAS annuler_ordre se abbiamo rowIndex
-  if(o.rowIndex&&o.rowIndex>0){
-    gasPost({action:"annuler_ordre",rowIndex:o.rowIndex}).then(function(res){
-      if(res.ok) toast("✅ Ordre annulé");
-      else toast("GAS: "+res.error,true);
-    }).catch(function(){toast("Erreur réseau",true);});
-  }
+  var payload={action:"annuler_ordre"};
+  if(o.id && o.id.startsWith("ACH-")) payload.achatId=o.id;
+  else if(o.rowIndex&&o.rowIndex>0) payload.rowIndex=o.rowIndex;
+  gasPost(payload).then(function(res){
+    if(res&&res.ok) toast("🗑️ Ordre supprimé");
+    else toast("❌ "+(res&&res.error||"Erreur"),true);
+  }).catch(function(){toast("❌ Erreur réseau",true);});
   cOrdiniInviati.splice(idx,1);
   _salvaEnvoyes();
   renderEnvoyes();
-  toast("🗑️ Ordre retiré de la liste");
 }
 
 function envoyesApriDet(idx){
