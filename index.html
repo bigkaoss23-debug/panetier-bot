@@ -1950,6 +1950,13 @@ function eliminaCommande(id){
   toast("🗑️ Commande supprimée");
 }
 
+function _mapStatut(statut, demandeur){
+  var s=(statut||"").toString().toUpperCase().trim();
+  if(s==="RETIREE"||s==="REFUSEE"||s==="REFUSÉE"||s==="SUPPRIME") return "ritirato";
+  if(s==="CONFIRMEE"||s==="CONFIRMÉE"||s==="ACCEPTEE") return "pronto";
+  return "attesa"; // EN ATTENTE o sconosciuto
+}
+
 function renderCommandes(){
   var c=document.getElementById("s-lista-commandes"); if(!c) return;
   var now=new Date();
@@ -2151,9 +2158,12 @@ function managerLoadAll(){
   // Commandes
   gasGet("get_commandes").then(function(res){
     if(!res.ok||!res.commandes) return;
-    var SM={"En attente":"attesa","EN ATTENTE":"attesa","Acceptee":"pronto","Refusee":"ritirato","RETIREE":"ritirato","SUPPRIME":"ritirato","CONFIRMÉE":"pronto","CONFIRMEE":"pronto","confirmee":"pronto","pronto":"pronto","attesa":"attesa","ritirato":"ritirato"};
     sCommandes=res.commandes.map(function(c){
-      return {id:c.id||("CMD-"+Date.now()+Math.random()),rowIndex:c.rowIndex||0,nom:c.client||"",tel:c.tel||"",date:c.date||"",heure:c.heure||"",prodotti:[{nome:c.produits||"",qty:1}],note:c.note||"",stato:SM[c.statut]||"attesa",demandeur:c.demandeur||"",creato:c.creato||""};
+      var dem=(c.demandeur||"").toString().trim();
+      return {id:c.id||("CMD-"+Date.now()+Math.random()),cmdId:c.id||null,rowIndex:c.rowIndex||0,
+        nom:c.client||"",tel:c.tel||"",date:c.date||"",heure:c.heure||"",
+        prodotti:[{nome:c.produits||"",qty:1}],note:c.note||"",
+        stato:_mapStatut(c.statut,dem),demandeur:dem,creato:c.creato||""};
     });
     if(document.getElementById("mp-commandes").classList.contains("active")) renderManagerCommandes();
   });
@@ -2911,14 +2921,14 @@ function renderManagerCommandes(){
   // Sempre ricarica dal GAS — dati freschi
   el.innerHTML='<div class="empty-state"><span class="empty-icon">⏳</span>Chargement...</div>';
   if(sumEl) sumEl.innerHTML="";
-  var SM={"En attente":"attesa","EN ATTENTE":"attesa","Acceptee":"pronto","Refusee":"ritirato","RETIREE":"ritirato","SUPPRIME":"ritirato","CONFIRMÉE":"pronto","CONFIRMEE":"pronto"};
   gasGet("get_commandes").then(function(res){
     if(!res.ok||!res.commandes){el.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>Aucune commande</div>';return;}
     sCommandes=res.commandes.map(function(c){
+      var dem=(c.demandeur||"").toString().trim();
       return {id:c.id||("CMD-"+Date.now()+Math.random()),cmdId:c.id||null,rowIndex:c.rowIndex||0,
         nom:c.client||"",tel:c.tel||"",date:c.date||"",heure:c.heure||"",
         prodotti:[{nome:c.produits||"",qty:1}],note:c.note||"",
-        stato:SM[c.statut]||"attesa",demandeur:c.demandeur||"",creato:c.creato||""};
+        stato:_mapStatut(c.statut,dem),demandeur:dem,creato:c.creato||""};
     });
     _doRenderManagerCommandes();
   }).catch(function(){el.innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span>Erreur réseau</div>';});
