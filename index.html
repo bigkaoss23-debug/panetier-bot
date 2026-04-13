@@ -1106,6 +1106,20 @@ function apriModulo(ruolo) {
 }
 
 function esci() {
+  // Pulisce tutta la memoria locale — tablet/telefoni condivisi da persone diverse
+  try {
+    var keys = Object.keys(localStorage);
+    keys.forEach(function(k){
+      if(k.indexOf('umode_')===0 || k==='panetier_ordini' || k==='panetier_commandes' || k==='panetier_envoyes') {
+        localStorage.removeItem(k);
+      }
+    });
+  } catch(e){}
+  // Reset quantità ordini in memoria
+  for(var fi=0;fi<FORNITORI.length;fi++){
+    cQuantita[fi]=[];
+    for(var pi=0;pi<FORNITORI[fi].prodotti.length;pi++) cQuantita[fi][pi]=0;
+  }
   document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
   document.getElementById("view-login").classList.add("active");
   mostraLscreen("lscreen-roles");
@@ -1296,6 +1310,7 @@ function aggiornaRiepilogo(){
   for(var fi=0;fi<FORNITORI.length;fi++){
     var f=FORNITORI[fi],righe=[];
     for(var pi=0;pi<f.prodotti.length;pi++){
+      var qty=cQuantita[fi][pi]||0;
       if(qty>0){
         var p=f.prodotti[pi];
         var isKg=p.unite&&p.unite.toLowerCase().includes("kg");
@@ -1755,7 +1770,7 @@ function copiaTesto(elId){
     navigator.clipboard.writeText(txt).then(function(){
       toast("✅ Copié !");
     }).catch(function(){
-      copiaTesroFallback(txt);
+      copiaTestoFallback(txt);
     });
   } else {
     copiaTestoFallback(txt);
@@ -3084,13 +3099,6 @@ function loadCommandesReelles(){
       if(el) el.innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span>Erreur chargement</div>';
       return;
     }
-    var STATUT_MAP = {
-      "En attente": "attesa",
-      "Acceptee":   "pronto",
-      "Refusee":    "ritirato",
-      "RETIREE":    "ritirato",
-      "SUPPRIME":   "supprime"
-    };
     var oggiISO=(function(){var n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})();
     function normDate(s){
       if(!s) return "";
